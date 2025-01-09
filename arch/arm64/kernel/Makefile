@@ -89,3 +89,6 @@ endif
 
 # for cleaning
 subdir- += vdso vdso32
+
+obj-$(CONFIG_HAKC_ARM_V8) += hakc/armv8/
+obj-$(CONFIG_HAKC_ARM_V9) += hakc/armv9/

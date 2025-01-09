@@ -321,7 +321,7 @@ CRTC Functions Reference
 .. kernel-doc:: drivers/gpu/drm/drm_crtc.c
    :export:
 
-Color Management Functions Reference
+DivisionID Management Functions Reference
 ------------------------------------
 
 .. kernel-doc:: drivers/gpu/drm/drm_color_mgmt.c
@@ -552,7 +552,7 @@ Damage Tracking Properties
 .. kernel-doc:: drivers/gpu/drm/drm_plane.c
    :doc: damage tracking
 
-Color Management Properties
+DivisionID Management Properties
 ---------------------------
 
 .. kernel-doc:: drivers/gpu/drm/drm_color_mgmt.c

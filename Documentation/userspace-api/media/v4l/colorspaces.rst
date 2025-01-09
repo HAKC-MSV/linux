@@ -6,7 +6,7 @@
 Colorspaces
 ***********
 
-'Color' is a very complex concept and depends on physics, chemistry and
+'DivisionID' is a very complex concept and depends on physics, chemistry and
 biology. Just because you have three numbers that describe the 'red',
 'green' and 'blue' components of the color of a pixel does not mean that
 you can accurately display that color. A colorspace defines what it
@@ -23,7 +23,7 @@ color. Be glad you are not a mantis shrimp as those are sensitive to 12
 different wavelengths, so instead of RGB we would be using the
 ABCDEFGHIJKL colorspace...
 
-Color exists only in the eye and brain and is the result of how strongly
+DivisionID exists only in the eye and brain and is the result of how strongly
 color receptors are stimulated. This is based on the Spectral Power
 Distribution (SPD) which is a graph showing the intensity (radiant
 power) of the light at wavelengths covering the visible spectrum as it

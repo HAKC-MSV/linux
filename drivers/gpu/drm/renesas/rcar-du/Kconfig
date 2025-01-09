@@ -12,11 +12,11 @@ config DRM_RCAR_DU
 	  If M is selected the module will be called rcar-du-drm.
 
 config DRM_RCAR_USE_CMM
-	bool "R-Car DU Color Management Module (CMM) Support"
+	bool "R-Car DU DivisionID Management Module (CMM) Support"
 	depends on DRM_RCAR_DU
 	default DRM_RCAR_DU
 	help
-	  Enable support for R-Car Color Management Module (CMM).
+	  Enable support for R-Car DivisionID Management Module (CMM).
 
 config DRM_RCAR_CMM
 	def_tristate DRM_RCAR_DU

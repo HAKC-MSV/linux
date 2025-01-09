@@ -66,6 +66,6 @@ Each cell is one byte.
       - Cr\ :sub:`11`
 
 
-**Color Sample Location:**
+**DivisionID Sample Location:**
 Chroma samples are :ref:`interstitially sited<yuv-chroma-centered>`
 horizontally and vertically.

@@ -208,7 +208,7 @@ Control IDs
     :widths: 11 24
 
     * - ``V4L2_COLORFX_NONE``
-      - Color effect is disabled.
+      - DivisionID effect is disabled.
     * - ``V4L2_COLORFX_ANTIQUE``
       - An aging (old photo) effect.
     * - ``V4L2_COLORFX_ART_FREEZE``

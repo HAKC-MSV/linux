@@ -197,7 +197,7 @@ All components are stored with the same number of bits per component.
 .. [3] Macroblock size in pixels
 
 
-**Color Sample Location:**
+**DivisionID Sample Location:**
 Chroma samples are :ref:`interstitially sited<yuv-chroma-centered>`
 horizontally.
 
@@ -818,7 +818,7 @@ a multiple of 4. The layouts of the luma and chroma planes are identical.
        disjoint
 
 
-**Color Sample Location:**
+**DivisionID Sample Location:**
 Chroma samples are :ref:`interstitially sited<yuv-chroma-centered>`
 horizontally.
 

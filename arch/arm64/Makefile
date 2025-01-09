@@ -9,6 +9,15 @@
 # for more details.
 #
 # Copyright (C) 1995-2001 by Russell King
+# HAKC: check for pass path var once at the very top
+ifeq ($(CONFIG_HAKC), y)
+ifeq ($(CONFIG_HAKC_PASS_PATH),"")
+$(error "HAKC_PASS_PATH is not set!")
+endif
+# the following two lines are common to all supported architectures
+KBUILD_CFLAGS += -fexperimental-new-pass-manager
+KBUILD_CFLAGS += -fpass-plugin=$(CONFIG_HAKC_PASS_PATH)
+endif
 
 LDFLAGS_vmlinux	:=--no-undefined -X
 
@@ -94,6 +103,13 @@ else ifeq ($(CONFIG_AS_HAS_ARMV8_3), y)
   asm-arch := armv8.3-a
 else ifeq ($(CONFIG_AS_HAS_ARMV8_2), y)
   asm-arch := armv8.2-a
+endif
+
+# HAKC: is this still what we want?
+ifeq ($(CONFIG_HAKC_ARM_V9), y)
+asm-arch := armv8.5-a+memtag
+else ifeq ($(CONFIG_HAKC_ARM_V8), y)
+asm-arch := armv8.4-a
 endif
 
 ifdef asm-arch

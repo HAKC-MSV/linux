@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-or-later
+	// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (C) 2002 Richard Henderson
  * Copyright (C) 2001 Rusty Russell, 2002, 2010 Rusty Russell IBM.
@@ -59,6 +59,12 @@
 #include <linux/debugfs.h>
 #include <uapi/linux/module.h>
 #include "internal.h"
+
+#if IS_ENABLED(CONFIG_HAKC)
+#include <linux/hakc/hakc-defs.h>
+#include <linux/hakc/hakc.h>
+#include <linux/hakc/hakc-globals.h>
+#endif
 
 #define CREATE_TRACE_POINTS
 #include <trace/events/module.h>
@@ -369,11 +375,73 @@ struct module *find_module(const char *name)
 
 static inline void __percpu *mod_percpu(struct module *mod)
 {
+#if IS_ENABLED(CONFIG_HAKC)
+	return mod->percpus[percpu_idx];
+#else
 	return mod->percpu;
+#endif
 }
+
+#if IS_ENABLED(CONFIG_HAKC)
+static int percpu_modalloc_shdr(struct module *mod, Elf_Shdr *pcpusec,
+				unsigned int *size, void *__percpu *pcpu)
+{
+	unsigned long align;
+	unsigned long alloc_size;
+	if (!pcpusec) {
+		return 0;
+	}
+
+	if (!pcpusec->sh_size)
+		return 0;
+
+	align = pcpusec->sh_addralign;
+	alloc_size = HAKC_ROUND_UP(pcpusec->sh_size);
+
+	if (align > PAGE_SIZE) {
+		pr_warn("%s: per-cpu alignment %li > %li\n", mod->name, align,
+			PAGE_SIZE);
+		align = PAGE_SIZE;
+	}
+
+	*pcpu = __alloc_reserved_percpu(alloc_size, align);
+	if (!*pcpu) {
+		pr_warn("%s: Could not allocate %lu bytes percpu data\n",
+			mod->name, alloc_size);
+		return -ENOMEM;
+	}
+	*size = alloc_size;
+	return 0;
+}
+#endif
 
 static int percpu_modalloc(struct module *mod, struct load_info *info)
 {
+#if IS_ENABLED(CONFIG_HAKC)
+	int result, idx;
+	clique_color_t color;
+	for_each_hakc_color(idx, color)
+	{
+		result = percpu_modalloc_shdr(
+			mod, &info->sechdrs[info->index.hakc_pcpu[idx]],
+			&mod->percpu_sizes[idx], &mod->percpus[idx]);
+		if (result != 0) {
+			return result;
+		}
+
+		if (mod->percpu_sizes[idx] > 0) {
+			int cpu;
+			for_each_possible_cpu (cpu) {
+				hakc_color_address(
+					per_cpu_ptr(mod->percpus[idx], cpu),
+					color, mod->percpu_sizes[idx]);
+			}
+		}
+	}
+	return percpu_modalloc_shdr(mod, &info->sechdrs[info->index.pcpu],
+					&mod->percpu_sizes[percpu_idx],
+					&mod->percpus[percpu_idx]);
+#else
 	Elf_Shdr *pcpusec = &info->sechdrs[info->index.pcpu];
 	unsigned long align = pcpusec->sh_addralign;
 
@@ -394,11 +462,20 @@ static int percpu_modalloc(struct module *mod, struct load_info *info)
 	}
 	mod->percpu_size = pcpusec->sh_size;
 	return 0;
+#endif
 }
 
 static void percpu_modfree(struct module *mod)
 {
+#if IS_ENABLED(CONFIG_HAKC)
+	unsigned int i;
+	for_each_percpu(i)
+	{
+		free_percpu(mod->percpus[i]);
+	}
+#else
 	free_percpu(mod->percpu);
+#endif
 }
 
 static unsigned int find_pcpusec(struct load_info *info)
@@ -406,17 +483,75 @@ static unsigned int find_pcpusec(struct load_info *info)
 	return find_sec(info, ".data..percpu");
 }
 
+#if IS_ENABLED(CONFIG_HAKC)
+static void percpu_modcopy_ptr(void *__percpu ptr, const void *from,
+				unsigned long size)
+{
+	int cpu;
+
+	if (size == 0)
+		return;
+
+	for_each_possible_cpu(cpu)
+		memcpy(per_cpu_ptr(ptr, cpu), from, size);
+}
+#endif
+
 static void percpu_modcopy(struct module *mod,
 			   const void *from, unsigned long size)
 {
+#if IS_ENABLED(CONFIG_HAKC)
+	percpu_modcopy_ptr(mod->percpus[percpu_idx], from, size);
+#else
 	int cpu;
 
 	for_each_possible_cpu(cpu)
 		memcpy(per_cpu_ptr(mod->percpu, cpu), from, size);
+#endif
 }
 
 bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
 {
+#if IS_ENABLED(CONFIG_HAKC)
+	struct module *mod;
+	unsigned int cpu;
+	unsigned int idx;
+
+	preempt_disable();
+
+	list_for_each_entry_rcu(mod, &modules, list) {
+		if (mod->state == MODULE_STATE_UNFORMED)
+			continue;
+		for_each_percpu(idx)
+		{
+			if (!mod->percpu_sizes[idx])
+				continue;
+			for_each_possible_cpu(cpu) {
+				void *start =
+					per_cpu_ptr(mod->percpus[idx], cpu);
+				void *va = (void *)addr;
+
+				if (va >= start &&
+					va < start + mod->percpu_sizes[idx]) {
+					if (can_addr) {
+						*can_addr =
+							(unsigned long) (va -
+									start);
+						*can_addr += (unsigned long)
+							per_cpu_ptr(
+							mod->percpus[idx],
+							get_boot_cpu_id());
+					}
+					preempt_enable();
+					return true;
+				}
+			}
+		}
+	}
+
+	preempt_enable();
+	return false;
+#else
 	struct module *mod;
 	unsigned int cpu;
 
@@ -446,6 +581,7 @@ bool __is_module_percpu_address(unsigned long addr, unsigned long *can_addr)
 
 	preempt_enable();
 	return false;
+#endif
 }
 
 /**
@@ -1369,6 +1505,9 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
 	Elf_Shdr *symsec = &info->sechdrs[info->index.sym];
 	Elf_Sym *sym = (void *)symsec->sh_addr;
 	unsigned long secbase;
+#if IS_ENABLED(CONFIG_HAKC)
+	unsigned int pcpu_idx;
+#endif
 	unsigned int i;
 	int ret = 0;
 	const struct kernel_symbol *ksym;
@@ -1425,8 +1564,24 @@ static int simplify_symbols(struct module *mod, const struct load_info *info)
 			/* Divert to percpu allocation if a percpu var. */
 			if (sym[i].st_shndx == info->index.pcpu)
 				secbase = (unsigned long)mod_percpu(mod);
-			else
+			else {
+#if IS_ENABLED(CONFIG_HAKC)
+				secbase =
+					info->sechdrs[sym[i].st_shndx].sh_addr;
+				for_each_added_percpu(pcpu_idx)
+				{
+					if (sym[i].st_shndx ==
+					info->index.hakc_pcpu[pcpu_idx]) {
+						secbase =
+						(unsigned long)mod->percpus
+							[pcpu_idx];
+						break;
+					}
+				}
+#else
 				secbase = info->sechdrs[sym[i].st_shndx].sh_addr;
+#endif
+			}
 			sym[i].st_value += secbase;
 			break;
 		}
@@ -1669,6 +1824,9 @@ static int validate_section_offset(struct load_info *info, Elf_Shdr *shdr)
 static int elf_validity_cache_copy(struct load_info *info, int flags)
 {
 	unsigned int i;
+#if IS_ENABLED(CONFIG_HAKC)
+	clique_color_t color;
+#endif
 	Elf_Shdr *shdr, *strhdr;
 	int err;
 	unsigned int num_mod_secs = 0, mod_idx;
@@ -1892,7 +2050,13 @@ static int elf_validity_cache_copy(struct load_info *info, int flags)
 		info->index.vers = find_sec(info, "__versions");
 
 	info->index.pcpu = find_pcpusec(info);
-
+#if IS_ENABLED(CONFIG_HAKC)
+	for_each_hakc_color(i, color)
+	{
+		info->index.hakc_pcpu[i] =
+			find_sec(info, hakc_pcpu_section_names[i]);
+	}
+#endif
 	return 0;
 
 no_exec:
@@ -2128,6 +2292,43 @@ static int find_module_sections(struct module *mod, struct load_info *info)
 	}
 #endif
 
+#if IS_ENABLED(CONFIG_HAKC)
+    mod->hakc_global_inits = section_objs(info,
+                                          ".hakc.global_init.data",
+                                          sizeof(*mod->hakc_global_inits),
+                                          &mod->num_hakc_global_inits);
+    if(!mod->hakc_global_inits) {
+        mod->num_hakc_global_inits = 0;
+    }
+
+	/*
+	 * linker scripts take care of getting the actual new functions from
+	 * .hakc.modparam_ctx.text loaded
+	 *
+	 * when it comes to loading the array of function pointers to those
+	 * functions, we need to do that ourselves
+	 */
+
+	/* look up new modparam context function pointer array section */
+	mod->hakc_modparam_getctx_fp = section_objs(info,
+					".hakc.modparam_ctx_fp",
+					sizeof(*mod->hakc_modparam_getctx_fp),
+					&mod->num_hakc_modparam_getctx_fp);
+
+	/*
+	 * it is not an error to be missing this section, just means
+	 * there aren't any "module_param(...)" in the module
+	 */
+	if (!mod->hakc_modparam_getctx_fp) {
+		mod->hakc_modparams = 0;
+		mod->num_hakc_modparam_getctx_fp = 0;
+	} else {
+		mod->hakc_modparams = 1;
+		pr_info("%s has HAKC-protected module parameters.\n",
+			mod->name);
+	}
+#endif
+
 	mod->noinstr_text_start = section_objs(info, ".noinstr.text", 1,
 						&mod->noinstr_text_size);
 
@@ -2279,6 +2480,21 @@ static int move_module(struct module *mod, struct load_info *info)
 			}
 			memcpy(dest, (void *)shdr->sh_addr, shdr->sh_size);
 		}
+#if IS_ENABLED(CONFIG_HAKC)
+		if (mod->hakc_protected) {
+			const char *sname = info->secstrings + shdr->sh_name;
+			clique_color_t color;
+			unsigned int idx;
+			for_each_hakc_color(idx, color)
+			{
+				if (strstr(sname, hakc_section_names[idx])) {
+					hakc_color_address(dest, color,
+								shdr->sh_size);
+					break;
+				}
+			}
+		}
+#endif
 		/*
 		 * Update the userspace copy's ELF section address to point to
 		 * our newly allocated memory as a pure convenience so that
@@ -2336,6 +2552,21 @@ int __weak module_frob_arch_sections(Elf_Ehdr *hdr,
 				     char *secstrings,
 				     struct module *mod)
 {
+#if IS_ENABLED(CONFIG_HAKC_X86)
+	unsigned int i;
+	for (i=0; i<hdr->e_shnum; i++) {
+		if (!mod->hakc_protected &&
+			strstr(secstrings+sechdrs[i].sh_name, ".hakc.")) {
+			mod->hakc_protected = true;
+		}
+		if (mod->hakc_protected) {
+			if (strstr(secstrings+sechdrs[i].sh_name,
+				".data..ro_after_init..data.hakc.")) {
+				sechdrs[i].sh_flags |= SHF_RO_AFTER_INIT;
+			}
+		}
+	}
+#endif
 	return 0;
 }
 
@@ -2365,6 +2596,10 @@ static struct module *layout_and_allocate(struct load_info *info, int flags)
 	struct module *mod;
 	unsigned int ndx;
 	int err;
+#if IS_ENABLED(CONFIG_HAKC)
+	unsigned int i;
+	clique_color_t unused;
+#endif
 
 	/* Allow arches to frob section contents and sizes.  */
 	err = module_frob_arch_sections(info->hdr, info->sechdrs,
@@ -2379,7 +2614,15 @@ static struct module *layout_and_allocate(struct load_info *info, int flags)
 
 	/* We will do a special allocation for per-cpu sections later. */
 	info->sechdrs[info->index.pcpu].sh_flags &= ~(unsigned long)SHF_ALLOC;
-
+#if IS_ENABLED(CONFIG_HAKC)
+	for_each_added_percpu(i)
+	{
+		if (info->index.hakc_pcpu[i]) {
+			info->sechdrs[info->index.hakc_pcpu[i]].sh_flags &=
+				~(unsigned long)SHF_ALLOC;
+		}
+	}
+#endif
 	/*
 	 * Mark ro_after_init section with SHF_RO_AFTER_INIT so that
 	 * layout_sections() can put it in the right place.
@@ -2388,6 +2631,14 @@ static struct module *layout_and_allocate(struct load_info *info, int flags)
 	ndx = find_sec(info, ".data..ro_after_init");
 	if (ndx)
 		info->sechdrs[ndx].sh_flags |= SHF_RO_AFTER_INIT;
+#if IS_ENABLED(CONFIG_HAKC)
+	for_each_hakc_color(i, unused)
+	{
+		ndx = find_sec(info, hakc_ro_after_init_section_names[i]);
+		if (ndx)
+			info->sechdrs[ndx].sh_flags |= SHF_RO_AFTER_INIT;
+	}
+#endif
 	/*
 	 * Mark the __jump_table section as ro_after_init as well: these data
 	 * structures are never modified, with the exception of entries that
@@ -2435,12 +2686,26 @@ int __weak module_finalize(const Elf_Ehdr *hdr,
 
 static int post_relocation(struct module *mod, const struct load_info *info)
 {
+#if IS_ENABLED(CONFIG_HAKC)
+	unsigned int idx;
+#endif
+
 	/* Sort exception table now relocations are done. */
 	sort_extable(mod->extable, mod->extable + mod->num_exentries);
 
 	/* Copy relocated percpu area over. */
 	percpu_modcopy(mod, (void *)info->sechdrs[info->index.pcpu].sh_addr,
 		       info->sechdrs[info->index.pcpu].sh_size);
+#if IS_ENABLED(CONFIG_HAKC)
+	for_each_added_percpu(idx)
+	{
+		percpu_modcopy_ptr(
+			mod->percpus[idx],
+			(void *)info->sechdrs[info->index.hakc_pcpu[idx]]
+				.sh_addr,
+			info->sechdrs[info->index.hakc_pcpu[idx]].sh_size);
+	}
+#endif
 
 	/* Setup kallsyms-specific fields. */
 	add_kallsyms(mod, info);
@@ -2457,6 +2722,12 @@ static void do_mod_ctors(struct module *mod)
 
 	for (i = 0; i < mod->num_ctors; i++)
 		mod->ctors[i]();
+#endif
+
+#if IS_ENABLED(CONFIG_HAKC)
+    if(mod->num_hakc_global_inits > 0) {
+        hakc_init_globals(mod->num_hakc_global_inits, mod->hakc_global_inits);
+    }
 #endif
 }
 
@@ -2821,6 +3092,11 @@ static int early_mod_check(struct load_info *info, int flags)
 	return err;
 }
 
+#if IS_ENABLED(CONFIG_HAKC)
+int hakc_duplicate_readonly_charp(const struct kernel_param *kp);
+int hakc_transfer_charp(const struct kernel_param *kp);
+#endif
+
 /*
  * Allocate and load the module: note that size of section 0 is always
  * zero, and we rely on this for optional sections.
@@ -2832,6 +3108,7 @@ static int load_module(struct load_info *info, const char __user *uargs,
 	bool module_allocated = false;
 	long err = 0;
 	char *after_dashes;
+	int ret;
 
 	/*
 	 * Do the signature check (if any) first. All that
@@ -2947,6 +3224,54 @@ static int load_module(struct load_info *info, const char __user *uargs,
 	if (err)
 		goto bug_cleanup;
 
+#if IS_ENABLED(CONFIG_HAKC)
+	/* the following code is run to transfer charp modparams to their
+	 * respective compartments during init */
+	if (mod->hakc_protected) {
+		const struct kernel_param *params = mod->kp;
+		size_t i;
+		for (i = 0; i < mod->num_kp; i++) {
+			pr_debug("load_module: p[i].ops %lx "
+				"&param_ops_charp %lx\n",
+				params[i].ops, &param_ops_charp);
+			/* reliable way to check param type here is to see
+			 * if the ops are the const ops_charp */
+			if (params[i].ops == &param_ops_charp) {
+				/* null pointer dereference was possible
+				 * in hakc_duplicate_readonly_charp */
+				if (*(char **)params[i].arg) {
+					int dup_not_ok = -ENOMEM;
+					int charp_transfer_not_ok;
+
+					dup_not_ok =
+						hakc_duplicate_readonly_charp(
+							&params[i]);
+					pr_debug("load_module: dup_ro_charp "
+						"%d", dup_not_ok);
+					if (dup_not_ok) {
+						err = dup_not_ok;
+						goto coming_cleanup;
+					}
+
+					/* as-is, the above can leak memory if
+					 * it returns -ENOMEM after succeeding
+					 * previously */
+					charp_transfer_not_ok =
+						hakc_transfer_charp(
+							&params[i]);
+					pr_debug("load_module: "
+						"charp_transfer_not_ok %d",
+						charp_transfer_not_ok);
+					if (charp_transfer_not_ok) {
+						err = charp_transfer_not_ok;
+						goto coming_cleanup;
+					}
+				}
+			}
+		}
+	}
+#endif
+
 	mod->async_probe_requested = async_probe;
 
 	/* Module is ready to execute: parsing args may do that. */
@@ -2978,7 +3303,23 @@ static int load_module(struct load_info *info, const char __user *uargs,
 	/* Done! */
 	trace_module_load(mod);
 
-	return do_init_module(mod);
+#if IS_ENABLED(CONFIG_HAKC)
+	if (mod->hakc_protected) {
+		pr_info("About to init HAKC module %s!\n", mod->name);
+#if IS_ENABLED(CONFIG_HAKC_LOG_FAILURE)
+		hakc_create_proc_entry();
+#endif
+	}
+#endif
+	ret = do_init_module(mod);
+#if IS_ENABLED(CONFIG_HAKC)
+	/* use-after-free if mod is used without checking value of ret */
+	if (!ret) {
+		if (mod->hakc_protected)
+			pr_info("init HAKC module returned %d!\n", ret);
+	}
+#endif
+	return ret;
 
  sysfs_cleanup:
 	mod_sysfs_teardown(mod);

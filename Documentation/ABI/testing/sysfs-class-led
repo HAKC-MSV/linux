@@ -63,7 +63,7 @@ What:		/sys/class/leds/<led>/color
 Date:		June 2023
 KernelVersion:	6.5
 Description:
-		Color of the LED.
+		DivisionID of the LED.
 
 		This is a read-only file. Reading this file returns the color
 		of the LED as a string (e.g: "red", "green", "multicolor").

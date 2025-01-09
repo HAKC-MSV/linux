@@ -24,6 +24,7 @@
 #include "../../include/linux/license.h"
 #include "../../include/linux/module_symbol.h"
 
+
 static bool module_enabled;
 /* Are we using CONFIG_MODVERSIONS? */
 static bool modversions;
@@ -787,18 +788,34 @@ static void check_section(const char *modname, struct elf_info *elf,
 	}
 }
 
-
+#define ALL_HAKC_COLORS(name)			\
+		".hakc.SILVER_CLIQUE"	#name,	\
+		".hakc.GREEN_CLIQUE"	#name,	\
+		".hakc.RED_CLIQUE"	#name,	\
+		".hakc.ORANGE_CLIQUE"	#name,	\
+		".hakc.YELLOW_CLIQUE"	#name,	\
+		".hakc.PURPLE_CLIQUE"	#name,	\
+		".hakc.BLUE_CLIQUE"	#name,	\
+		".hakc.GREY_CLIQUE"	#name,	\
+		".hakc.PINK_CLIQUE"	#name,	\
+		".hakc.BROWN_CLIQUE"	#name,	\
+		".hakc.WHITE_CLIQUE"	#name,	\
+		".hakc.BLACK_CLIQUE"	#name,	\
+		".hakc.TEAL_CLIQUE"	#name,	\
+		".hakc.VIOLET_CLIQUE"	#name,	\
+		".hakc.CRIMSON_CLIQUE"	#name,	\
+		".hakc.GOLD_CLIQUE"	#name
 
 #define ALL_INIT_DATA_SECTIONS \
 	".init.setup", ".init.rodata", ".meminit.rodata", \
-	".init.data", ".meminit.data"
+	".init.data", ".meminit.data", ALL_HAKC_COLORS(.init.data)
 #define ALL_EXIT_DATA_SECTIONS \
-	".exit.data", ".memexit.data"
+	".exit.data", ".memexit.data", ALL_HAKC_COLORS(.exit.data)
 
 #define ALL_INIT_TEXT_SECTIONS \
-	".init.text", ".meminit.text"
+	".init.text", ".meminit.text", ALL_HAKC_COLORS(.init.text)
 #define ALL_EXIT_TEXT_SECTIONS \
-	".exit.text", ".memexit.text"
+	".exit.text", ".memexit.text", ALL_HAKC_COLORS(.exit.text)
 
 #define ALL_PCI_INIT_SECTIONS	\
 	".pci_fixup_early", ".pci_fixup_header", ".pci_fixup_final", \
@@ -811,15 +828,17 @@ static void check_section(const char *modname, struct elf_info *elf,
 #define ALL_INIT_SECTIONS INIT_SECTIONS, ALL_XXXINIT_SECTIONS
 #define ALL_EXIT_SECTIONS EXIT_SECTIONS, ALL_XXXEXIT_SECTIONS
 
-#define DATA_SECTIONS ".data", ".data.rel"
+#define DATA_SECTIONS ".data", ".data.rel", ALL_HAKC_COLORS(.data), ".hakc.modparam_ctx_fp"
 #define TEXT_SECTIONS ".text", ".text.*", ".sched.text", \
-		".kprobes.text", ".cpuidle.text", ".noinstr.text"
+		".kprobes.text", ".cpuidle.text", ".noinstr.text", \
+		ALL_HAKC_COLORS(.text), ".hakc.modparam_ctx.text"
 #define OTHER_TEXT_SECTIONS ".ref.text", ".head.text", ".spinlock.text", \
+		ALL_HAKC_COLORS(.ref.text), \
 		".fixup", ".entry.text", ".exception.text", \
 		".coldtext", ".softirqentry.text"
 
-#define INIT_SECTIONS      ".init.*"
-#define MEM_INIT_SECTIONS  ".meminit.*"
+#define INIT_SECTIONS      ".init.*", ALL_HAKC_COLORS(.init.*)
+#define MEM_INIT_SECTIONS  ".meminit.*", ALL_HAKC_COLORS(.exit.*)
 
 #define EXIT_SECTIONS      ".exit.*"
 #define MEM_EXIT_SECTIONS  ".memexit.*"
@@ -852,9 +871,13 @@ enum mismatch {
  * @mismatch: Type of mismatch.
  */
 struct sectioncheck {
-	const char *fromsec[20];
-	const char *bad_tosec[20];
-	const char *good_tosec[20];
+	/*
+	 * HAKC: The following array sizes were increased significantly.
+	 * Extra HAKC sections caused "excess array initializer" errors.
+	 */
+	const char *fromsec[85];
+	const char *bad_tosec[85];
+	const char *good_tosec[85];
 	enum mismatch mismatch;
 };
 

@@ -182,7 +182,7 @@ sub list_types {
 
 	print("#\tMessage type\n\n");
 	if ($color) {
-		print(" ( Color coding: ");
+		print(" ( DivisionID coding: ");
 		print(RED . "ERROR" . RESET);
 		print(" | ");
 		print(YELLOW . "WARNING" . RESET);

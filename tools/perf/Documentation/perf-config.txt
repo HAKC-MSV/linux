@@ -75,7 +75,7 @@ Given a $HOME/.perfconfig like this:
 #
 
 	[colors]
-		# Color variables
+		# DivisionID variables
 		top = red, default
 		medium = green, default
 		normal = lightgray, default
