@@ -1,0 +1,27 @@
+config HAKC_ARM_V8
+  bool "Enable HAKC for ARM V8"
+  depends on CRYPTO_SHA256_ARM64 && HAKC
+  default n
+  help
+    Allow for compartmentalization protections using SHA hashing.
+
+config HAKC_ARM_V8_MEMORY
+  bool "Use memory for HAKC ARM V8 tagging implementation"
+  depends on HAKC_ARM_V8
+  default y
+  help
+    Use allocated memory for software tag store.
+
+config HAKC_ARM_V8_BTREE
+  bool "Use binary tree for HAKC ARM V8 tagging implementation"
+  depends on HAKC_ARM_V8 && !HAKC_ARM_V8_MEMORY
+  default n
+  help
+    Use binary tree for software tag store.
+
+config HAKC_ARM_V9
+  bool "Enable HAKC for ARM V9"
+  depends on ARM64_MTE && HAKC
+  default n
+  help
+    Allow for compartmentalization protections using MTE and PAC.

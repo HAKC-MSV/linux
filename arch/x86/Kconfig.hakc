@@ -1,0 +1,34 @@
+config HAKC_X86
+  bool "Enable HAKC for X86-64"
+  depends on HAKC && X86
+  default n
+  help
+    Allow for compartmentalization protections using SHA hashing.
+
+config HAKC_X86_SIGN_NI
+  bool "Use NI SHA-256 implementation for pointer signing"
+  depends on HAKC_X86 && AS_SHA256_NI
+  default n
+  help
+    Use NI implementation of SHA-256 for pointer signing and authentication when available..
+
+config HAKC_X86_SIGN_SSSE3
+  bool "Use SSSE3 SHA-256 implementation for pointer signing"
+  depends on HAKC_X86 && !HAKC_X86_SIGN_NI && CRYPTO_SHA256_SSSE3
+  default y
+  help
+    Use SSSE3 implementation of SHA-256 for pointer signing and authentication when NI is not available.
+
+config HAKC_X86_MEMORY
+  bool "Use memory for HAKC X86-64 tagging implementation"
+  depends on HAKC_X86 && (HAKC_X86_SIGN_SSSE3 || HAKC_X86_SIGN_NI)
+  default y
+  help
+    Use allocated memory for software tag store.
+
+config HAKC_X86_BTREE
+  bool "Use binary tree for HAKC X86-64 tagging implementation"
+  depends on HAKC_X86 && (HAKC_X86_SIGN_SSSE3 || HAKC_X86_SIGN_NI) && !HAKC_X86_MEMORY
+  default n
+  help
+    Use binary tree for software tag store.
