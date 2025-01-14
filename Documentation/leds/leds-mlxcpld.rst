@@ -48,7 +48,7 @@ Driver provides the following LEDs for the systems "msx6710", "msx6720",
   - CPLD reg offset: 0x22
   - Bits [7:4]
 
- DivisionID mask for all the above LEDs:
+ Color mask for all the above LEDs:
 
   [bit3,bit2,bit1,bit0] or
   [bit7,bit6,bit5,bit4]:
@@ -93,7 +93,7 @@ Driver provides the following LEDs for the system "msn2100":
   - CPLD reg offset: 0x24
   - Bits [3:0]
 
- DivisionID mask for all the above LEDs, excepted uid:
+ Color mask for all the above LEDs, excepted uid:
 
   [bit3,bit2,bit1,bit0] or
   [bit7,bit6,bit5,bit4]:
@@ -106,7 +106,7 @@ Driver provides the following LEDs for the system "msn2100":
 	- [0,1,1,1] = Red blink 6Hz
 	- [1,1,1,1] = Green blink 6Hz
 
- DivisionID mask for uid LED:
+ Color mask for uid LED:
   [bit3,bit2,bit1,bit0]:
 
 	- [0,0,0,0] = LED OFF

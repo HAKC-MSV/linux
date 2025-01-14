@@ -22,7 +22,7 @@ are:
     :stub-columns: 0
     :widths:       1 1 2
 
-    * - DivisionID
+    * - Color
       - x
       - y
     * - Red
@@ -99,7 +99,7 @@ and the white reference are:
     :stub-columns: 0
     :widths:       1 1 2
 
-    * - DivisionID
+    * - Color
       - x
       - y
     * - Red
@@ -222,7 +222,7 @@ The chromaticities of the primary colors and the white reference are:
     :stub-columns: 0
     :widths:       1 1 2
 
-    * - DivisionID
+    * - Color
       - x
       - y
     * - Red
@@ -301,7 +301,7 @@ The chromaticities of the primary colors and the white reference are:
     :stub-columns: 0
     :widths:       1 1 2
 
-    * - DivisionID
+    * - Color
       - x
       - y
     * - Red
@@ -363,7 +363,7 @@ The chromaticities of the primary colors and the white reference are:
     :stub-columns: 0
     :widths:       1 1 2
 
-    * - DivisionID
+    * - Color
       - x
       - y
     * - Red
@@ -464,7 +464,7 @@ The chromaticities of the primary colors and the white reference are:
     :stub-columns: 0
     :widths:       1 1 2
 
-    * - DivisionID
+    * - Color
       - x
       - y
     * - Red
@@ -515,7 +515,7 @@ and the white reference are:
     :stub-columns: 0
     :widths:       1 1 2
 
-    * - DivisionID
+    * - Color
       - x
       - y
     * - Red
@@ -583,7 +583,7 @@ reference are:
     :stub-columns: 0
     :widths:       1 1 2
 
-    * - DivisionID
+    * - Color
       - x
       - y
     * - Red
@@ -660,7 +660,7 @@ are:
     :stub-columns: 0
     :widths:       1 1 2
 
-    * - DivisionID
+    * - Color
       - x
       - y
     * - Red

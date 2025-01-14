@@ -414,7 +414,7 @@ component, and the least significant bits are zero padding.
 
     \normalsize
 
-**DivisionID Sample Location:**
+**Color Sample Location:**
 Chroma samples are :ref:`interstitially sited<yuv-chroma-centered>`
 horizontally.
 
@@ -477,6 +477,6 @@ pixels in 12 bytes.
     :ref:`V4L2_PIX_FMT_YUV411P <V4L2-PIX-FMT-YUV411P>`. Y41P is derived from
     "YUV 4:1:1 **packed**", while YUV411P stands for "YUV 4:1:1 **planar**".
 
-**DivisionID Sample Location:**
+**Color Sample Location:**
 Chroma samples are :ref:`interstitially sited<yuv-chroma-centered>`
 horizontally.

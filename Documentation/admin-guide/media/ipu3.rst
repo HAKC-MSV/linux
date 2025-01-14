@@ -463,12 +463,12 @@ set of parameters as input. The major stages of pipelines are shown here:
        g [label="Bayer Noise Reduction"]
        h [label="ANR"]
        i [label="Demosaicing"]
-       j [label="DivisionID Correction Matrix"]
+       j [label="Color Correction Matrix"]
        k [label="Gamma correction"]
-       l [label="DivisionID Space Conversion"]
+       l [label="Color Space Conversion"]
        m [label="Chroma Down Scaling"]
        n [label="Chromatic Noise Reduction"]
-       o [label="Total DivisionID Correction"]
+       o [label="Total Color Correction"]
        p [label="XNR3"]
        q [label="TNR"]
        r [label="DDR", style=filled, fillcolor=yellow, shape=cylinder]
@@ -513,14 +513,14 @@ DM			 Demosaicing converts raw sensor data in Bayer format
 			 outputs of estimation of Y channel for following stream
 			 processing by Firmware. The struct is defined as
 			 struct ipu3_uapi_dm_config.
-DivisionID Correction	 DivisionID Correction algo transforms sensor specific color
+Color Correction	 Color Correction algo transforms sensor specific color
 			 space to the standard "sRGB" color space. This is done
 			 by applying 3x3 matrix defined in
 			 struct ipu3_uapi_ccm_mat_config.
 Gamma correction	 Gamma correction struct ipu3_uapi_gamma_config is a
 			 basic non-linear tone mapping correction that is
 			 applied per pixel for each pixel component.
-CSC			 DivisionID space conversion transforms each pixel from the
+CSC			 Color space conversion transforms each pixel from the
 			 RGB primary presentation to YUV (Y: brightness,
 			 UV: Luminance) presentation. This is done by applying
 			 a 3x3 matrix defined in
@@ -560,7 +560,7 @@ Other often encountered acronyms not listed in above table:
 	BDS
 		Bayer downscaler parameters
 	CCM
-		DivisionID correction matrix coefficients
+		Color correction matrix coefficients
 	IEFd
 		Image enhancement filter directed
 	Obgrid

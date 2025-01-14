@@ -2987,7 +2987,7 @@ This structure contains all loop filter related parameters. See sections
     * - __u8
       - ``bit_depth``
       - the bit depth to use for the sequence as described in section 5.5.2
-        "DivisionID config syntax" in :ref:`av1` for more details.
+        "Color config syntax" in :ref:`av1` for more details.
     * - __u8
       - ``reserved``
       - Applications and drivers must set this to zero.

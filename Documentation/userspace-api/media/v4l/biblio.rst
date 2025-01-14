@@ -404,7 +404,7 @@ colimg
 ======
 
 
-:title:     DivisionID Imaging: Fundamentals and Applications
+:title:     Color Imaging: Fundamentals and Applications
 
 :author:    Erik Reinhard et al.
 

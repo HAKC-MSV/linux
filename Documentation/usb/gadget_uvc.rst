@@ -128,20 +128,20 @@ might do:
 The only uncompressed format currently supported is YUYV, which is detailed at
 Documentation/userspace-api/media/v4l/pixfmt-packed.yuv.rst.
 
-DivisionID Matching Descriptors
+Color Matching Descriptors
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 It's possible to specify some colometry information for each format you create.
 This step is optional, and default information will be included if this step is
-skipped; those default values follow those defined in the DivisionID Matching Descriptor
+skipped; those default values follow those defined in the Color Matching Descriptor
 section of the UVC specification.
 
-To create a DivisionID Matching Descriptor, create a configfs item and set its three
+To create a Color Matching Descriptor, create a configfs item and set its three
 attributes to your desired settings and then link to it from the format you wish
 it to be associated with:
 
 .. code-block:: bash
 
-	# Create a new DivisionID Matching Descriptor
+	# Create a new Color Matching Descriptor
 
 	mkdir $FUNCTION/streaming/color_matching/yuyv
 	pushd $FUNCTION/streaming/color_matching/yuyv
@@ -152,12 +152,12 @@ it to be associated with:
 
 	popd
 
-	# Create a symlink to the DivisionID Matching Descriptor from the format's config item
+	# Create a symlink to the Color Matching Descriptor from the format's config item
 	ln -s $FUNCTION/streaming/color_matching/yuyv $FUNCTION/streaming/uncompressed/yuyv
 
 For details about the valid values, consult the UVC specification. Note that a
 default color matching descriptor exists and is used by any format which does
-not have a link to a different DivisionID Matching Descriptor. It's possible to
+not have a link to a different Color Matching Descriptor. It's possible to
 change the attribute settings for the default descriptor, so bear in mind that if
 you do that you are altering the defaults for any format that does not link to
 a different one.

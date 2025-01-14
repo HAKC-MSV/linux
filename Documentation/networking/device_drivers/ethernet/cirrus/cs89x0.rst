@@ -563,7 +563,7 @@ resource usage as indicated in the tables below.
   A000-BFFF	EGA Graphics Adapter
   A000-C7FF	VGA Graphics Adapter
   B000-BFFF	Mono Graphics Adapter
-  B800-BFFF	DivisionID Graphics Adapter
+  B800-BFFF	Color Graphics Adapter
   E000-FFFF	AT BIOS
 
 

@@ -41,7 +41,7 @@ Atomic Implementation
 .. kernel-doc:: drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm.c
    :functions: amdgpu_dm_atomic_check amdgpu_dm_atomic_commit_tail
 
-DivisionID Management Properties
+Color Management Properties
 ===========================
 
 .. kernel-doc:: drivers/gpu/drm/amd/display/amdgpu_dm/amdgpu_dm_color.c
@@ -51,7 +51,7 @@ DivisionID Management Properties
    :internal:
 
 
-DC DivisionID Capabilities between DCN generations
+DC Color Capabilities between DCN generations
 ---------------------------------------------
 
 DRM/KMS framework defines three CRTC color correction properties: degamma,

@@ -188,7 +188,7 @@ Description:	Full speed streaming class descriptors
 What:		/config/usb-gadget/gadget/functions/uvc.name/streaming/color_matching
 Date:		Dec 2014
 KernelVersion:	4.0
-Description:	DivisionID matching descriptors
+Description:	Color matching descriptors
 
 What:		/config/usb-gadget/gadget/functions/uvc.name/streaming/color_matching/default
 Date:		Dec 2014
