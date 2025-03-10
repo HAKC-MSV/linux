@@ -5,12 +5,12 @@ config HAKC
   bool "Enable HAKC"
   default n
 
-config HAKC_PASS_PATH
+config HAKC_CONFIG_PATH
   depends on HAKC
-  string "HAKC Compiler Pass Path"
+  string "HAKC Configuration File Path"
   default ""
   help
-    The path to the compiled HAKC compiler pass.
+    The path to the HAKC configuration path.
 
 source "arch/x86/Kconfig.hakc"
 source "arch/arm64/Kconfig.hakc"

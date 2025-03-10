@@ -1,7 +1,7 @@
 ifeq ($(CONFIG_HAKC), y)
-	ifeq ($(CONFIG_HAKC_PASS_PATH),"")
-		$(error "HAKC_PASS_PATH is not set!")
-	endif
+ifeq ($(CONFIG_HAKC_CONFIG_PATH),"")
+$(error "CONFIG_HAKC_CONFIG_PATH is not set!")
+endif
 endif
 
 obj-$(CONFIG_HAKC) += hakc_common.o hakc_global_init.o
