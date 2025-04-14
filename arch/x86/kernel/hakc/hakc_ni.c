@@ -90,10 +90,10 @@ static inline void *ni_sha256_hash_address_with_modifier(const void *address,
 	return result;
 }
 
-void *sign_data(const void *address, pac_salt_t modifier)
+static inline void *sign_data(const void *address, pac_salt_t modifier)
 {
 	void *result;
-	HAKC_INFO("%s: Signing data pointer %lx with salt %lx\n", impl_str,
+	HAKC_INFO("%s: Signing data pointer %p with salt %llx\n", impl_str,
 		  address, modifier);
 
 	result = ni_sha256_hash_address_with_modifier(address, modifier);
@@ -101,10 +101,10 @@ void *sign_data(const void *address, pac_salt_t modifier)
 	return result;
 }
 
-void *sign_code(const void *address, pac_salt_t modifier)
+static inline void *sign_code(const void *address, pac_salt_t modifier)
 {
 	void *result;
-	HAKC_INFO("%s: Signing code pointer %lx with salt %lx\n", impl_str,
+	HAKC_INFO("%s: Signing code pointer %p with salt %llx\n", impl_str,
 		  address, modifier);
 
 	result = ni_sha256_hash_address_with_modifier(address, modifier);
@@ -112,11 +112,11 @@ void *sign_code(const void *address, pac_salt_t modifier)
 	return result;
 }
 
-void *hakc_auth_data_ptr(const void *address, pac_salt_t modifier)
+static inline void *hakc_auth_data_ptr(const void *address, pac_salt_t modifier)
 {
 	void *result;
 	void *hashed_result;
-	HAKC_INFO("%s: Authenticating data at %lx with salt %lx\n", impl_str,
+	HAKC_INFO("%s: Authenticating data at %p with salt %llx\n", impl_str,
 		  address, modifier);
 
 	hashed_result = ni_sha256_hash_address_with_modifier(address,
@@ -130,16 +130,16 @@ void *hakc_auth_data_ptr(const void *address, pac_salt_t modifier)
 	}
 
 	if (HAKC_DEBUG && 0) {
-		pr_info("result: %lx\n", result);
+		pr_info("result: %p\n", result);
 	}
 	return result;
 }
 
-void *hakc_auth_code_ptr(const void *address, pac_salt_t modifier)
+static inline void *hakc_auth_code_ptr(const void *address, pac_salt_t modifier)
 {
 	void *result;
 	void *hashed_result;
-	HAKC_INFO("%s: Authenticating code at %lx with salt %lx\n", impl_str,
+	HAKC_INFO("%s: Authenticating code at %p with salt %llx\n", impl_str,
 		  address, modifier);
 
 	hashed_result = ni_sha256_hash_address_with_modifier(address,
@@ -154,7 +154,7 @@ void *hakc_auth_code_ptr(const void *address, pac_salt_t modifier)
 	return result;
 }
 
-bool is_readonly(unsigned long addr)
+static inline bool is_readonly(unsigned long addr)
 {
 	pte_t *pte;
 	/* TODO: Figure out why pte_write sometimes returns true when the

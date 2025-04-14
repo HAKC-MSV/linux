@@ -1,4 +1,3 @@
-#include <linux/hakc/hakc.h>
 #include <linux/module.h>
 #include <linux/net.h>
 #include <linux/skbuff.h>
@@ -8,6 +7,9 @@
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <linux/tty.h>
+
+/* Include last to allow proper def of "kernel_param" to be included above, if possible */
+#include <linux/hakc/hakc.h>
 
 #if IS_ENABLED(CONFIG_HAKC_ARM_V8) && IS_ENABLED(CONFIG_HAKC_ARM_V9)
 #error "ARM v8 and ARM v9 HAKC configured together. Check .config and rebuild."
@@ -68,7 +70,7 @@ struct percpu_info {
 	void *percpu_addr;
 };
 
-void initialize_hakc() {
+void initialize_hakc(void) {
     pr_info("Initializing HAKC system");
     hakc_init_tags();
     hakc_init_kernel_globals();
@@ -257,7 +259,7 @@ EXPORT_SYMBOL(get_hakc_color_by_name);
 static inline bool verify_and_set_auth_ptr(uint64_t auth_ptr, void **ptr)
 {
 	bool result = !addr_is_signed((void *)auth_ptr);
-	HAKC_INFO("%lx is%s authenticated\n", auth_ptr, result ? "" : " not");
+	HAKC_INFO("%llx is%s authenticated\n", auth_ptr, result ? "" : " not");
 	if (result && ptr) {
 		*ptr = (void *)auth_ptr;
 	} else if (!result && ptr) {
@@ -317,10 +319,10 @@ static void *check_hakc_access(const void *address,
 #if HAKC_USE_SYMBOLS && IS_ENABLED(CONFIG_KALLSYMS)
 	sprint_symbol(safename, (uintptr_t)address);
 	if (safename[0] == safename[1] == 'f') {
-		HAKC_INFO("access_tok = 0x%lx\taddress = 0x%lx\n", access_tok,
+		HAKC_INFO("access_tok = 0x%llx\taddress = 0x%p\n", access_tok,
 				address);
 	} else {
-		HAKC_INFO("access_tok = 0x%lx\taddress = 0x%lx (%s)\n",
+		HAKC_INFO("access_tok = 0x%llx\taddress = 0x%p (%s)\n",
 				access_tok, address, safename);
 	}
 #else
@@ -329,7 +331,7 @@ static void *check_hakc_access(const void *address,
 #endif
 
 	addr_color = get_hakc_address_color(safe_addr);
-	HAKC_INFO("0x%lx is colored %s and in compartment %lu\n", address,
+	HAKC_INFO("0x%p is colored %s and in compartment %u\n", address,
 			get_hakc_color_name(addr_color), compartment);
 
 	/*
@@ -341,15 +343,15 @@ static void *check_hakc_access(const void *address,
 	 * this change does not break ARM v8 or x86-64 support
 	 */
 	salt = obtain_modifier_cert(addr_color, compartment) & access_tok;
-	HAKC_INFO("ctx_addr = %lx salt = %lx\n", address, salt);
+	HAKC_INFO("ctx_addr = %p salt = %llx\n", address, salt);
 	result = (unsigned long)auth_func(
 			(const void *)HAKC_CONTEXT_ADDR(address), salt);
 	result |= (0x0000FFFFFFFFFFFF & (unsigned long)address);
 
-	HAKC_INFO("result = %lx address = %lx\n", result, address);
+	HAKC_INFO("result = %lx address = %p\n", result, address);
 	if (HAKC_ALLOW) {
 		if (addr_is_signed((void *)result)) {
-			HAKC_INFO("Invalid pointer signature: 0x%lx 0x%lx\n",
+			HAKC_INFO("Invalid pointer signature: 0x%p 0x%llx\n",
 					address, salt);
 			missed_accesses++;
 #if HAKC_LOG_FAILURE
@@ -430,7 +432,7 @@ void *check_hakc_code_access(const void *address,
 		return (void *)HAKC_GET_SAFE_PTR(address);
 	}
 
-	HAKC_INFO("Checking code access to %lx for %ld targets\n", address,
+	HAKC_INFO("Checking code access to %p for %ld targets\n", address,
 			n_targets);
 
 	authenticated_ptr = check_hakc_access(address, compartment, access_tok,
@@ -440,7 +442,7 @@ void *check_hakc_code_access(const void *address,
 		index = hakc_get_valid_target_index(address, valid_targets,
 							n_targets) >= 0;
 
-		HAKC_INFO("Code access to %lx is%s allowed\n", address,
+		HAKC_INFO("Code access to %p is%s allowed\n", address,
 				(index > 0) ? "" : " not");
 
 		if (index < 0) {
@@ -454,7 +456,7 @@ void *check_hakc_code_access(const void *address,
 }
 EXPORT_SYMBOL(check_hakc_code_access);
 
-noinline void hakc_debug_breakpoint()
+noinline void hakc_debug_breakpoint(void)
 {
 	dump_stack();
 }
@@ -472,7 +474,7 @@ void *hakc_sign_pointer(void *addr, hakc_compartment_id_t compartment,
 
 	if (VALID_COMPARTMENT(compartment)) {
 		addr = HAKC_GET_SAFE_PTR(addr);
-		HAKC_INFO("\tsafe ptr %llx\n", addr);
+		HAKC_INFO("\tsafe ptr %p\n", addr);
 		if (is_code) {
 			addr = (void *)compute_code_pac((void *)addr, color,
 							compartment);
@@ -480,7 +482,7 @@ void *hakc_sign_pointer(void *addr, hakc_compartment_id_t compartment,
 			addr = (void *)compute_data_pac((void *)addr, color,
 							compartment);
 		}
-		HAKC_INFO("TRANSFER RESULT to %d %lx\n", compartment, addr);
+		HAKC_INFO("TRANSFER RESULT to %d %p\n", compartment, addr);
 	}
 
 #if HAKC_SIGN_PTR
@@ -538,7 +540,7 @@ static void *color_and_sign(void *data_to_transfer, size_t size,
 	if (!is_userspace_addr(data_to_transfer) && size > 0) {
 		unsigned long addr = (unsigned long)data_to_transfer;
 
-		HAKC_INFO("Transferring %lu bytes at %lx to compartment %d "
+		HAKC_INFO("Transferring %lu bytes at %p to compartment %d "
 				"(%s)\n",
 				size, data_to_transfer, compartment,
 				get_hakc_color_name(color));
@@ -574,7 +576,7 @@ void *hakc_transfer_percpu(void __percpu *pcpu_ptr_base, size_t size,
 		return pcpu_ptr_base;
 	}
 
-	HAKC_INFO("Transferring percpu variable %lx with size %lx to %d and "
+	HAKC_INFO("Transferring percpu variable %p with size %lx to %d and "
 			"color %s\n",
 			pcpu_ptr_base, size, compartment,
 			get_hakc_color_name(color));
@@ -586,7 +588,7 @@ void *hakc_transfer_percpu(void __percpu *pcpu_ptr_base, size_t size,
 
 	result = __addr_to_pcpu_ptr(signed_ptr);
 
-	HAKC_INFO("Transferred percpu variable %lx: %lx (%lx %lx)\n",
+	HAKC_INFO("Transferred percpu variable %p: %p (%p %p)\n",
 			pcpu_ptr_base, result, per_cpu_ptr(result, 0),
 			check_hakc_data_access(per_cpu_ptr(result, 0), compartment,
 				obtain_modifier_cert(color, compartment)));

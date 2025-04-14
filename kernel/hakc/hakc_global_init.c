@@ -22,7 +22,7 @@ int hakc_init_globals(size_t num_initializers, hakc_global_init_fp hakc_global_i
 
 extern uintptr_t _s_hakc_init_global, _e_hakc_init_global;
 
-int hakc_init_kernel_globals() {
+int hakc_init_kernel_globals(void) {
     size_t num_globals = _e_hakc_init_global - _s_hakc_init_global;
 
     pr_info("%s called", __FUNCTION__);

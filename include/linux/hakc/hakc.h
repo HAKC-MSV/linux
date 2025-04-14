@@ -4,6 +4,10 @@
 #include <linux/compiler_types.h>
 #include <linux/bits.h>
 
+#ifndef kernel_param
+#include <linux/moduleparam.h>
+#endif
+
 noinline void hakc_debug_breakpoint(void);
 
 typedef u32 hakc_compartment_id_t;
@@ -123,6 +127,8 @@ void initialize_hakc(void);
 		const claque_entry_tok_t __valid_targets[] = { TARGET,         \
 							       ##__VA_ARGS__ }
 
+uintptr_t hakc_pagetable_walk(const void *addr);
+
 const char *get_hakc_color_name(clique_color_t color);
 
 clique_color_t get_hakc_address_color(const void *addr);
@@ -147,6 +153,10 @@ void *hakc_transfer_to_clique(void *data_to_transfer, size_t size,
 			      hakc_compartment_id_t claque_id,
 			      clique_color_t color,
 			     bool is_code);
+
+void *hakc_transfer_percpu(void __percpu *pcpu_ptr_base, size_t size,
+			   hakc_compartment_id_t compartment,
+			   clique_color_t color);
 
 void *hakc_sign_pointer(void *addr, hakc_compartment_id_t claque_id,
 	clique_color_t color, bool is_code);
@@ -206,6 +216,9 @@ static inline bool addr_is_signed(const void *ptr)
 	unsigned int upper_bits = (p >> HAKC_ADDRESS_BITS);
 	return (upper_bits > 0 && upper_bits != 0xFFFF);
 }
+
+int hakc_duplicate_readonly_charp(const struct kernel_param *kp);
+int hakc_transfer_charp(const struct kernel_param *kp);
 
 #else /* ! IS_ENABLED(CONFIG_HAKC) */
 

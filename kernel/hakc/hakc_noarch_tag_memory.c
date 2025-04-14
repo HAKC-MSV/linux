@@ -1,4 +1,5 @@
 #include <linux/hakc/hakc.h>
+#include <linux/vmalloc.h>
 #include <linux/module.h>
 #include <linux/skbuff.h>
 #include <linux/percpu.h>
@@ -48,7 +49,7 @@ void hakc_init_tags(void)
 		return;
 	}
 
-	pr_info("HAKC physical tagpool allocated at vma %lx\n",
+	pr_info("HAKC physical tagpool allocated at vma %p\n",
 		tagpool_physical);
 
 	/* everything is tagged SILVER_CLIQUE by default */
@@ -158,7 +159,7 @@ void hakc_color_address(const void *addr_to_color, clique_color_t color,
 		return;
 	}
 	if (!VALID_COLOR(color)) {
-		HAKC_INFO("%llx !VALID_COLOR(%lx)\n", addr_to_color, color);
+		HAKC_INFO("%p !VALID_COLOR(%x)\n", addr_to_color, color);
 		color = SILVER_CLIQUE;
 	}
 
@@ -178,7 +179,7 @@ void hakc_color_address(const void *addr_to_color, clique_color_t color,
 	HAKC_INFO("hakc_color_address called from %lx (%s)\n", _RET_IP_, name);
 #endif
 
-	HAKC_INFO("Coloring %u bytes at 0x%lx %s (%d)\n", coloring_size, ptr,
+	HAKC_INFO("Coloring %zu bytes at %p %s (%d)\n", coloring_size, ptr,
 		 get_hakc_color_name(color), color);
 
 	/*
@@ -198,7 +199,7 @@ void hakc_color_address(const void *addr_to_color, clique_color_t color,
 	/* address translation */
 	uintptr_t paddr = hakc_pagetable_walk(ptr);
 	if (paddr == 0) {
-		HAKC_INFO("Can't translate address to color %lx\n", ptr);
+		HAKC_INFO("Can't translate address to color %p\n", ptr);
 		return;
 	}
 
@@ -269,11 +270,11 @@ clique_color_t get_hakc_address_color(const void *addr)
 	 */
 	if (_addr <= 0xffffffff) {
 		HAKC_ERR("get_hakc_address_color\n");
-		HAKC_ERR("\t_addr <= 0xffffffff (0x%llx)\n", _addr);
+		HAKC_ERR("\t_addr <= 0xffffffff (0x%lx)\n", _addr);
 		return SILVER_CLIQUE;
 	} else if(is_userspace_addr(addr)) {
 		HAKC_ERR("get_hakc_address_color\n");
-		HAKC_ERR("\tis_userspace_addr(addr) (0x%llx)\n", (void*)addr);
+		HAKC_ERR("\tis_userspace_addr(addr) (%p)\n", (void*)addr);
 		return SILVER_CLIQUE;
 	}
 

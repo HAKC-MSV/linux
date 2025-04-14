@@ -2051,6 +2051,8 @@ static int elf_validity_cache_copy(struct load_info *info, int flags)
 
 	info->index.pcpu = find_pcpusec(info);
 #if IS_ENABLED(CONFIG_HAKC)
+	int i, color;
+
 	for_each_hakc_color(i, color)
 	{
 		info->index.hakc_pcpu[i] =
@@ -3092,10 +3094,6 @@ static int early_mod_check(struct load_info *info, int flags)
 	return err;
 }
 
-#if IS_ENABLED(CONFIG_HAKC)
-int hakc_duplicate_readonly_charp(const struct kernel_param *kp);
-int hakc_transfer_charp(const struct kernel_param *kp);
-#endif
 
 /*
  * Allocate and load the module: note that size of section 0 is always
@@ -3231,8 +3229,8 @@ static int load_module(struct load_info *info, const char __user *uargs,
 		const struct kernel_param *params = mod->kp;
 		size_t i;
 		for (i = 0; i < mod->num_kp; i++) {
-			pr_debug("load_module: p[i].ops %lx "
-				"&param_ops_charp %lx\n",
+			pr_debug("load_module: p[i].ops %p "
+				"&param_ops_charp %p\n",
 				params[i].ops, &param_ops_charp);
 			/* reliable way to check param type here is to see
 			 * if the ops are the const ops_charp */
