@@ -505,39 +505,54 @@ static inline const char *zone_stat_name(enum zone_stat_item item)
 #ifdef CONFIG_NUMA
 static inline const char *numa_stat_name(enum numa_stat_item item)
 {
-	return vmstat_text[NR_VM_ZONE_STAT_ITEMS +
+  //        return vmstat_text[NR_VM_ZONE_STAT_ITEMS +
+  //			   item];
+        return vmstat_text[(enum numa_stat_item) NR_VM_ZONE_STAT_ITEMS +
 			   item];
 }
 #endif /* CONFIG_NUMA */
 
 static inline const char *node_stat_name(enum node_stat_item item)
 {
-	return vmstat_text[NR_VM_ZONE_STAT_ITEMS +
-			   NR_VM_NUMA_EVENT_ITEMS +
+  //	return vmstat_text[NR_VM_ZONE_STAT_ITEMS +
+  //			   NR_VM_NUMA_EVENT_ITEMS +
+  //			   item];
+        return vmstat_text[(enum node_stat_item) NR_VM_ZONE_STAT_ITEMS +
+			   (enum node_stat_item) NR_VM_NUMA_EVENT_ITEMS +
 			   item];
 }
 
 static inline const char *lru_list_name(enum lru_list lru)
 {
-	return node_stat_name(NR_LRU_BASE + lru) + 3; // skip "nr_"
+  // return node_stat_name(NR_LRU_BASE + lru) + 3; // skip "nr_"
+	return node_stat_name(NR_LRU_BASE + (enum node_stat_item)lru) + 3; // skip "nr_"	
 }
 
 static inline const char *writeback_stat_name(enum writeback_stat_item item)
 {
-	return vmstat_text[NR_VM_ZONE_STAT_ITEMS +
-			   NR_VM_NUMA_EVENT_ITEMS +
-			   NR_VM_NODE_STAT_ITEMS +
+  //        return vmstat_text[NR_VM_ZONE_STAT_ITEMS +
+  //			   NR_VM_NUMA_EVENT_ITEMS +
+  //			   NR_VM_NODE_STAT_ITEMS +
+  //			   item];
+        return vmstat_text[(enum node_stat_item) NR_VM_ZONE_STAT_ITEMS +
+			   (enum node_stat_item) NR_VM_NUMA_EVENT_ITEMS +
+			   (enum node_stat_item) NR_VM_NODE_STAT_ITEMS +
 			   item];
 }
 
 #if defined(CONFIG_VM_EVENT_COUNTERS) || defined(CONFIG_MEMCG)
 static inline const char *vm_event_name(enum vm_event_item item)
 {
-	return vmstat_text[NR_VM_ZONE_STAT_ITEMS +
-			   NR_VM_NUMA_EVENT_ITEMS +
-			   NR_VM_NODE_STAT_ITEMS +
-			   NR_VM_WRITEBACK_STAT_ITEMS +
-			   item];
+  //	return vmstat_text[NR_VM_ZONE_STAT_ITEMS +
+  //			   NR_VM_NUMA_EVENT_ITEMS +
+  //			   NR_VM_NODE_STAT_ITEMS +
+  //			   NR_VM_WRITEBACK_STAT_ITEMS +
+  //			   item];
+       return vmstat_text[(enum vm_event_item) NR_VM_ZONE_STAT_ITEMS +
+                          (enum vm_event_item) NR_VM_NUMA_EVENT_ITEMS +
+			  (enum vm_event_item) NR_VM_NODE_STAT_ITEMS +
+			  (enum vm_event_item) NR_VM_WRITEBACK_STAT_ITEMS +
+			  item];
 }
 #endif /* CONFIG_VM_EVENT_COUNTERS || CONFIG_MEMCG */
 
