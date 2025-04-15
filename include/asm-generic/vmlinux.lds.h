@@ -202,6 +202,7 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 #define BOUNDED_SECTION_POST_LABEL(_sec_, _label_, _BEGIN_, _END_)	\
 	_label_##_BEGIN_ = .;						\
 	KEEP(*(_sec_))							\
+	KEEP(*(.hakc.*_CLIQUE##_sec_))					\
 	_label_##_END_ = .;
 
 #define BOUNDED_SECTION_BY(_sec_, _label_)				\
@@ -315,6 +316,8 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 	. = ALIGN(8);							\
 	__##name##_of_table = .;					\
 	KEEP(*(__##name##_of_table))					\
+	KEEP(*(.hakc.*_CLIQUE__##name##_of_table))			\
+	KEEP(*(.hakc.*_CLIQUE__##name##_of_table_end))			\
 	KEEP(*(__##name##_of_table_end))
 
 #define TIMER_OF_TABLES()	OF_TABLE(CONFIG_TIMER_OF, timer)
@@ -356,6 +359,8 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 	*(DATA_MAIN)							\
 	*(.data..decrypted)						\
 	*(.ref.data)							\
+	*(.hakc.*_CLIQUE.ref.data)					\
+	*(.hakc.*_CLIQUE.data)						\
 	*(.data..shared_aligned) /* percpu related */			\
 	*(.data..unlikely)						\
 	__start_once = .;						\
@@ -363,6 +368,7 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 	__end_once = .;							\
 	STRUCT_ALIGN();							\
 	*(__tracepoints)						\
+	*(.hakc.*_CLIQUE__tracepoints)					\
 	/* implement dynamic printk debug */				\
 	. = ALIGN(8);							\
 	BOUNDED_SECTION_BY(__dyndbg_classes, ___dyndbg_classes)		\
@@ -393,11 +399,13 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 #define READ_MOSTLY_DATA(align)						\
 	. = ALIGN(align);						\
 	*(.data..read_mostly)						\
+	*(.hakc.*_CLIQUE.data..read_mostly)				\
 	. = ALIGN(align);
 
 #define CACHELINE_ALIGNED_DATA(align)					\
 	. = ALIGN(align);						\
-	*(.data..cacheline_aligned)
+	*(.data..cacheline_aligned)					\
+	*(.hakc.*_CLIQUE.data..cacheline_aligned)
 
 #define INIT_TASK_DATA(align)						\
 	. = ALIGN(align);						\
@@ -431,6 +439,7 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 	. = ALIGN(8);							\
 	__start_ro_after_init = .;					\
 	*(.data..ro_after_init)						\
+	*(.hakc.*_CLIQUE.data..ro_after_init)				\
 	JUMP_TABLE_DATA							\
 	STATIC_CALL_DATA						\
 	__end_ro_after_init = .;
@@ -458,11 +467,13 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 	.rodata           : AT(ADDR(.rodata) - LOAD_OFFSET) {		\
 		__start_rodata = .;					\
 		*(.rodata) *(.rodata.*) *(.data.rel.ro*)		\
+		*(.hakc.*_CLIQUE.rodata)				\
 		SCHED_DATA						\
 		RO_AFTER_INIT_DATA	/* Read only after init */	\
 		. = ALIGN(8);						\
 		BOUNDED_SECTION_BY(__tracepoints_ptrs, ___tracepoints_ptrs) \
 		*(__tracepoints_strings)/* Tracepoints: strings */	\
+		*(.hakc.*_CLIQUE__tracepoints_strings)			\
 	}								\
 									\
 	.rodata1          : AT(ADDR(.rodata1) - LOAD_OFFSET) {		\
@@ -527,6 +538,12 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 	/* Built-in module parameters. */				\
 	__param : AT(ADDR(__param) - LOAD_OFFSET) {			\
 		BOUNDED_SECTION_BY(__param, ___param)			\
+	}								\
+	/* Generated function pointers for module param PAC ctxs. */	\
+	__hakc_modparam_ctx_fp : AT(ADDR(__hakc_modparam_ctx_fp) - LOAD_OFFSET) {	\
+	__start___hakc_modparam_ctx_fp = .;				\
+	KEEP(*(.hakc.modparam_ctx_fp))					\
+	__stop___hakc_modparam_ctx_fp = .;				\
 	}								\
 									\
 	/* Built-in module versions. */					\
@@ -593,6 +610,9 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 		TEXT_HOT						\
 		*(TEXT_MAIN .text.fixup)				\
 		NOINSTR_TEXT						\
+		*(.hakc.*_CLIQUE.ref.text)				\
+		*(.hakc.*_CLIQUE.text)					\
+		*(.hakc.modparam_ctx.text)				\
 		*(.ref.text)
 
 /* sched.text is aling to function alignment to secure we have same
@@ -601,6 +621,7 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 		ALIGN_FUNCTION();					\
 		__sched_text_start = .;					\
 		*(.sched.text)						\
+		*(.hakc.*_CLIQUE.sched.text)				\
 		__sched_text_end = .;
 
 /* spinlock.text is aling to function alignment to secure we have same
@@ -627,6 +648,7 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 		ALIGN_FUNCTION();					\
 		__irqentry_text_start = .;				\
 		*(.irqentry.text)					\
+		*(.hakc.*_CLIQUE.irqentry.text)				\
 		__irqentry_text_end = .;
 
 #define SOFTIRQENTRY_TEXT						\
@@ -699,9 +721,16 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 #define INIT_DATA							\
 	KEEP(*(SORT(___kentry+*)))					\
 	*(.init.data .init.data.*)					\
+	*(.hakc.*_CLIQUE.init.data)					\
 	KERNEL_CTORS()							\
 	MCOUNT_REC()							\
 	*(.init.rodata .init.rodata.*)					\
+	*(.hakc.*_CLIQUE.init.rodata)  					\
+	. = ALIGN(8);                    				\
+	_s_hakc_init_global = .;                        		\
+	*(.hakc.global_init.data)                       		\
+	_e_hakc_init_global = .;                        		\
+	. = ALIGN(8);                    				\
 	FTRACE_EVENTS()							\
 	TRACE_SYSCALLS()						\
 	KPROBE_BLACKLIST()						\
@@ -723,6 +752,8 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 
 #define INIT_TEXT							\
 	*(.init.text .init.text.*)					\
+	*(.hakc.*_CLIQUE.init.text)    					\
+	*(.hakc.glob_init.text)                    			\
 	*(.text.startup)
 
 #define EXIT_DATA							\
@@ -733,9 +764,13 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 #define EXIT_TEXT							\
 	*(.exit.text)							\
 	*(.text.exit)							\
+	*(.hakc.*_CLIQUE.exit.text)					\
+	*(.hakc.*_CLIQUE.text.exit)					\
+
 
 #define EXIT_CALL							\
-	*(.exitcall.exit)
+	*(.exitcall.exit)						\
+	*(.hakc.*_CLIQUE.exitcall.exit)
 
 /*
  * bss (Block Started by Symbol) - uninitialized data
@@ -1067,9 +1102,11 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 	*(.data..percpu..page_aligned)					\
 	. = ALIGN(cacheline);						\
 	*(.data..percpu..read_mostly)					\
+	*(.hakc.*_CLIQUE.data..percpu..read_mostly)			\
 	. = ALIGN(cacheline);						\
 	*(.data..percpu)						\
 	*(.data..percpu..shared_aligned)				\
+	*(.hakc.*_CLIQUE.data..percpu..shared_aligned)			\
 	PERCPU_DECRYPTED_SECTION					\
 	__per_cpu_end = .;
 
