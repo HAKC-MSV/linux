@@ -174,7 +174,7 @@ alternative_else_nop_endif
 	.endm
 
 	.macro mte_set_kernel_gcr, tmp, tmp2
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 alternative_cb	ARM64_ALWAYS_SYSTEM, kasan_hw_tags_enable
 	b	1f
 alternative_cb_end
@@ -185,7 +185,7 @@ alternative_cb_end
 	.endm
 
 	.macro mte_set_user_gcr, tsk, tmp, tmp2
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 alternative_cb	ARM64_ALWAYS_SYSTEM, kasan_hw_tags_enable
 	b	1f
 alternative_cb_end

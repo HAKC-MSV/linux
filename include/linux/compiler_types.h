@@ -54,10 +54,18 @@ static inline void __chk_io_ptr(const volatile void __iomem *ptr) { }
 # ifdef STRUCTLEAK_PLUGIN
 #  define __user	__attribute__((user))
 # else
+#ifdef CONFIG_HAKC
+#  define __user	__attribute__((kernel_user_ptr))
+#else
 #  define __user	BTF_TYPE_TAG(user)
+#endif
 # endif
 # define __iomem
+#ifdef CONFIG_HAKC
+# define __percpu	__attribute__((per_cpu_ptr))
+#else
 # define __percpu	BTF_TYPE_TAG(percpu)
+#endif
 # define __rcu		BTF_TYPE_TAG(rcu)
 
 # define __chk_user_ptr(x)	(void)0

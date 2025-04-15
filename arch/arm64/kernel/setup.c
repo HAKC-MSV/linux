@@ -55,6 +55,10 @@
 #include <asm/xen/hypervisor.h>
 #include <asm/mmu_context.h>
 
+#if IS_ENABLED(CONFIG_HAKC)
+#include <linux/hakc/hakc.h>
+#endif
+
 static int num_standard_resources;
 static struct resource *standard_resources;
 
@@ -343,8 +347,9 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 
 	bootmem_init();
 
+#if (defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)) && !defined(CONFIG_HAKC_ARM_V9)
 	kasan_init();
-
+#endif
 	request_standard_resources();
 
 	early_ioremap_reset();
@@ -359,6 +364,13 @@ void __init __no_sanitize_address setup_arch(char **cmdline_p)
 	init_bootcpu_ops();
 	smp_init_cpus();
 	smp_build_mpidr_hash();
+
+	/* Init percpu seeds for random tags after cpus are set up. */
+#if (defined(CONFIG_KASAN_GENERIC) || defined(CONFIG_KASAN_SW_TAGS)) && !defined(CONFIG_HAKC_ARM_V9)
+	kasan_init_sw_tags();
+#elif defined(CONFIG_HAKC_ARM_V9)
+	initialize_hakc();
+#endif
 
 #ifdef CONFIG_ARM64_SW_TTBR0_PAN
 	/*

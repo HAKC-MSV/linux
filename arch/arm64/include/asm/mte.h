@@ -229,6 +229,11 @@ static inline void mte_disable_tco_entry(struct task_struct *task)
 	if (!system_supports_mte())
 		return;
 
+#if defined(CONFIG_HAKC_ARM_V9)
+	asm volatile(SET_PSTATE_TCO(0));
+	return;
+#endif
+
 	/*
 	 * Re-enable tag checking (TCO set on exception entry). This is only
 	 * necessary if MTE is enabled in either the kernel or the userspace
@@ -244,7 +249,7 @@ static inline void mte_disable_tco_entry(struct task_struct *task)
 		asm volatile(SET_PSTATE_TCO(0));
 }
 
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 void mte_check_tfsr_el1(void);
 
 static inline void mte_check_tfsr_entry(void)
@@ -280,7 +285,7 @@ static inline void mte_check_tfsr_entry(void)
 static inline void mte_check_tfsr_exit(void)
 {
 }
-#endif /* CONFIG_KASAN_HW_TAGS */
+#endif /* CONFIG_KASAN_HW_TAGS || CONFIG_HAKC_ARM_V9 */
 
 #endif /* __ASSEMBLY__ */
 #endif /* __ASM_MTE_H  */

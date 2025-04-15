@@ -26,7 +26,7 @@
 
 static DEFINE_PER_CPU_READ_MOSTLY(u64, mte_tcf_preferred);
 
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 /*
  * The asynchronous and asymmetric MTE modes have the same behavior for
  * store operations. This flag is set when either of these modes is enabled.
@@ -103,7 +103,7 @@ static inline void __mte_enable_kernel(const char *mode, unsigned long tcf)
 	pr_info_once("MTE: enabled in %s mode at EL1\n", mode);
 }
 
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 void mte_enable_kernel_sync(void)
 {
 	/*
@@ -159,7 +159,7 @@ void mte_enable_kernel_asymm(void)
 }
 #endif
 
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 void mte_check_tfsr_el1(void)
 {
 	u64 tfsr_el1 = read_sysreg_s(SYS_TFSR_EL1);
@@ -171,8 +171,9 @@ void mte_check_tfsr_el1(void)
 		 * (per ARM DDI 0487F.c table D13-1).
 		 */
 		write_sysreg_s(0, SYS_TFSR_EL1);
-
+#if !defined(CONFIG_HAKC_ARM_V9)
 		kasan_report_async();
+#endif
 	}
 }
 #endif
@@ -221,6 +222,10 @@ static void mte_update_gcr_excl(struct task_struct *task)
 	 * SYS_GCR_EL1 will be set to current->thread.mte_ctrl value by
 	 * mte_set_user_gcr() in kernel_exit, but only if KASAN is enabled.
 	 */
+#if defined(CONFIG_HAKC_ARM_V9)
+	return;
+#endif
+
 	if (kasan_hw_tags_enabled())
 		return;
 
@@ -230,7 +235,7 @@ static void mte_update_gcr_excl(struct task_struct *task)
 		SYS_GCR_EL1);
 }
 
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 /* Only called from assembly, silence sparse */
 void __init kasan_hw_tags_enable(struct alt_instr *alt, __le32 *origptr,
 				 __le32 *updptr, int nr_inst);

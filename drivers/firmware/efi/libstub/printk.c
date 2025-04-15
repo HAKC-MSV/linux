@@ -141,7 +141,11 @@ int efi_printk(const char *fmt, ...)
 	fmt = printk_skip_level(fmt);
 
 	va_start(args, fmt);
+#if IS_ENABLED(CONFIG_HAKC)
+	printed = ls_vsnprintf(printf_buf, sizeof(printf_buf), fmt, args);
+#else
 	printed = vsnprintf(printf_buf, sizeof(printf_buf), fmt, args);
+#endif
 	va_end(args);
 
 	efi_puts(printf_buf);

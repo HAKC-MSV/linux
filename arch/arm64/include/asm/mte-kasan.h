@@ -13,7 +13,7 @@
 
 #include <linux/types.h>
 
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 
 /* Whether the MTE asynchronous mode is enabled. */
 DECLARE_STATIC_KEY_FALSE(mte_async_or_asymm_mode);
@@ -23,14 +23,14 @@ static inline bool system_uses_mte_async_or_asymm_mode(void)
 	return static_branch_unlikely(&mte_async_or_asymm_mode);
 }
 
-#else /* CONFIG_KASAN_HW_TAGS */
+#else /* CONFIG_KASAN_HW_TAGS || CONFIG_HAKC_ARM_V9 */
 
 static inline bool system_uses_mte_async_or_asymm_mode(void)
 {
 	return false;
 }
 
-#endif /* CONFIG_KASAN_HW_TAGS */
+#endif /* CONFIG_KASAN_HW_TAGS || CONFIG_HAKC_ARM_V9 */
 
 #ifdef CONFIG_ARM64_MTE
 
@@ -53,14 +53,22 @@ static inline bool system_uses_mte_async_or_asymm_mode(void)
  */
 static inline void mte_disable_tco(void)
 {
+#ifdef CONFIG_HAKC_ARM_V9
+	asm volatile(SET_PSTATE_TCO(0));
+#else
 	asm volatile(ALTERNATIVE("nop", SET_PSTATE_TCO(0),
 				 ARM64_MTE, CONFIG_KASAN_HW_TAGS));
+#endif
 }
 
 static inline void mte_enable_tco(void)
 {
+#ifdef CONFIG_HAKC_ARM_V9
+	asm volatile(SET_PSTATE_TCO(1));
+#else
 	asm volatile(ALTERNATIVE("nop", SET_PSTATE_TCO(1),
 				 ARM64_MTE, CONFIG_KASAN_HW_TAGS));
+#endif
 }
 
 /*

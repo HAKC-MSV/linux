@@ -298,6 +298,9 @@ static int vmap_range_noflush(unsigned long addr, unsigned long end,
 
 	start = addr;
 	pgd = pgd_offset_k(addr);
+#if IS_ENABLED(CONFIG_HAKC_ARM_V9)
+	prot = __pgprot(pgprot_val(prot) | PROT_NORMAL_TAGGED);
+#endif
 	do {
 		next = pgd_addr_end(addr, end);
 		err = vmap_p4d_range(pgd, addr, next, phys_addr, prot,

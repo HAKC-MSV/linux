@@ -32,6 +32,11 @@ PROVIDE(__efistub_screen_info		= screen_info);
 #endif
 PROVIDE(__efistub__ctype		= _ctype);
 
+#ifdef CONFIG_HAKC
+PROVIDE(__efistub_get_hakc_address_color = get_hakc_address_color);
+PROVIDE(__efistub_hakc_transfer_to_clique = hakc_transfer_to_clique);
+#endif
+
 PROVIDE(__pi___memcpy			= __pi_memcpy);
 PROVIDE(__pi___memmove			= __pi_memmove);
 PROVIDE(__pi___memset			= __pi_memset);

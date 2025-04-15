@@ -761,24 +761,41 @@ static void check_section(const char *modname, struct elf_info *elf,
 	}
 }
 
-
+#define ALL_HAKC_COLORS(name)			\
+		".hakc.SILVER_CLIQUE"	#name,	\
+		".hakc.GREEN_CLIQUE"	#name,	\
+		".hakc.RED_CLIQUE"	#name,	\
+		".hakc.ORANGE_CLIQUE"	#name,	\
+		".hakc.YELLOW_CLIQUE"	#name,	\
+		".hakc.PURPLE_CLIQUE"	#name,	\
+		".hakc.BLUE_CLIQUE"	#name,	\
+		".hakc.GREY_CLIQUE"	#name,	\
+		".hakc.PINK_CLIQUE"	#name,	\
+		".hakc.BROWN_CLIQUE"	#name,	\
+		".hakc.WHITE_CLIQUE"	#name,	\
+		".hakc.BLACK_CLIQUE"	#name,	\
+		".hakc.TEAL_CLIQUE"	#name,	\
+		".hakc.VIOLET_CLIQUE"	#name,	\
+		".hakc.CRIMSON_CLIQUE"	#name,	\
+		".hakc.GOLD_CLIQUE"	#name
 
 #define ALL_INIT_DATA_SECTIONS \
-	".init.setup", ".init.rodata", ".init.data"
+	".init.setup", ".init.rodata", ".init.data", ALL_HAKC_COLORS(.init.data)
 
 #define ALL_PCI_INIT_SECTIONS	\
 	".pci_fixup_early", ".pci_fixup_header", ".pci_fixup_final", \
 	".pci_fixup_enable", ".pci_fixup_resume", \
 	".pci_fixup_resume_early", ".pci_fixup_suspend"
 
-#define ALL_INIT_SECTIONS ".init.*"
+#define ALL_INIT_SECTIONS ".init.*", ALL_HAKC_COLORS(.init.*)
 #define ALL_EXIT_SECTIONS ".exit.*"
 
-#define DATA_SECTIONS ".data", ".data.rel"
+#define DATA_SECTIONS ".data", ".data.rel", ALL_HAKC_COLORS(.data), ".hakc.modparam_ctx_fp"
 #define TEXT_SECTIONS ".text", ".text.*", ".sched.text", \
 		".kprobes.text", ".cpuidle.text", ".noinstr.text", \
-		".ltext", ".ltext.*"
+		".ltext", ".ltext.*", ALL_HAKC_COLORS(.text), ".hakc.modparam_ctx.text"
 #define OTHER_TEXT_SECTIONS ".ref.text", ".head.text", ".spinlock.text", \
+		ALL_HAKC_COLORS(.ref.text), \
 		".fixup", ".entry.text", ".exception.text", \
 		".coldtext", ".softirqentry.text", ".irqentry.text"
 
@@ -807,9 +824,13 @@ enum mismatch {
  * @mismatch: Type of mismatch.
  */
 struct sectioncheck {
-	const char *fromsec[20];
-	const char *bad_tosec[20];
-	const char *good_tosec[20];
+	/*
+	 * HAKC: The following array sizes were increased significantly.
+	 * Extra HAKC sections caused "excess array initializer" errors.
+	 */
+	const char *fromsec[85];
+	const char *bad_tosec[85];
+	const char *good_tosec[85];
 	enum mismatch mismatch;
 };
 

@@ -197,6 +197,7 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 #define BOUNDED_SECTION_PRE_LABEL(_sec_, _label_, _BEGIN_, _END_)	\
 	_BEGIN_##_label_ = .;						\
 	KEEP(*(_sec_))							\
+	KEEP(*(.hakc.*_CLIQUE##_sec_))				\
 	_END_##_label_ = .;
 
 #define BOUNDED_SECTION_POST_LABEL(_sec_, _label_, _BEGIN_, _END_)	\
@@ -546,6 +547,12 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 	__stop___hakc_modparam_ctx_fp = .;				\
 	}								\
 									\
+	/* Generated function pointers for module param PAC ctxs. */	\
+	__hakc_modparam_ctx_fp : AT(ADDR(__hakc_modparam_ctx_fp) - LOAD_OFFSET) {	\
+		__start___hakc_modparam_ctx_fp = .;			\
+		KEEP(*(.hakc.modparam_ctx_fp))				\
+		 __stop___hakc_modparam_ctx_fp = .;			\
+        }                                                               \
 	/* Built-in module versions. */					\
 	__modver : AT(ADDR(__modver) - LOAD_OFFSET) {			\
 		BOUNDED_SECTION_BY(__modver, ___modver)			\
@@ -1192,21 +1199,32 @@ defined(CONFIG_AUTOFDO_CLANG) || defined(CONFIG_PROPELLER_CLANG)
 	}								\
 	BUG_TABLE							\
 
+#if IS_ENABLED(CONFIG_HAKC)
 #define INIT_TEXT_SECTION(inittext_align)				\
-	. = ALIGN(inittext_align);					\
-	.init.text : AT(ADDR(.init.text) - LOAD_OFFSET) {		\
-		_sinittext = .;						\
-		INIT_TEXT						\
-		_einittext = .;						\
+	. = ALIGN(inittext_align);					        \
+	.init.text : AT(ADDR(.init.text) - LOAD_OFFSET) {	\
+		_sinittext = .;						            \
+		INIT_TEXT                                       \
+        *(.hakc.glob_init.text)                         \
+		_einittext = .;						            \
 	}
+#else
+#define INIT_TEXT_SECTION(inittext_align)				\
+	. = ALIGN(inittext_align);					        \
+	.init.text : AT(ADDR(.init.text) - LOAD_OFFSET) {	\
+		_sinittext = .;						            \
+		INIT_TEXT                                       \
+		_einittext = .;						            \
+	}
+#endif
 
 #define INIT_DATA_SECTION(initsetup_align)				\
-	.init.data : AT(ADDR(.init.data) - LOAD_OFFSET) {		\
-		INIT_DATA						\
-		INIT_SETUP(initsetup_align)				\
-		INIT_CALLS						\
-		CON_INITCALL						\
-		INIT_RAM_FS						\
+	.init.data : AT(ADDR(.init.data) - LOAD_OFFSET) {	\
+		INIT_DATA						                \
+		INIT_SETUP(initsetup_align)				        \
+		INIT_CALLS						                \
+		CON_INITCALL						            \
+		INIT_RAM_FS						                \
 	}
 
 #define BSS_SECTION(sbss_align, bss_align, stop_align)			\

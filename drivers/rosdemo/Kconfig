@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: GPL-2.0-only
+#
+# ROSDEMO configuration.
+#
+
+config ROSDEMO
+	tristate "ROS Demo malicious driver"
+	depends on PCI
+	help
+	  Set this to M for the purposefully buggy ROS kernel module.
+	  DO NOT INCLUDE IN ANY PATCH!
+

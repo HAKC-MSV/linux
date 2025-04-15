@@ -801,7 +801,8 @@ void arch_setup_new_exec(void)
 	}
 }
 
-#ifdef CONFIG_ARM64_TAGGED_ADDR_ABI
+//#ifdef CONFIG_ARM64_TAGGED_ADDR_ABI
+#if defined(CONFIG_ARM64_TAGGED_ADDR_ABI) || defined(CONFIG_HAKC_ARM_V9)
 /*
  * Control the relaxed ABI allowing tagged user addresses into the kernel.
  */
@@ -809,6 +810,9 @@ static unsigned int tagged_addr_disabled;
 
 long set_tagged_addr_ctrl(struct task_struct *task, unsigned long arg)
 {
+#if IS_ENABLED(CONFIG_HAKC_ARM_V9)
+	return -EINVAL;
+#endif
 	unsigned long valid_mask = PR_TAGGED_ADDR_ENABLE;
 	struct thread_info *ti = task_thread_info(task);
 
@@ -839,6 +843,9 @@ long set_tagged_addr_ctrl(struct task_struct *task, unsigned long arg)
 
 long get_tagged_addr_ctrl(struct task_struct *task)
 {
+#if IS_ENABLED(CONFIG_HAKC_ARM_V9)
+	return 0;
+#endif
 	long ret = 0;
 	struct thread_info *ti = task_thread_info(task);
 
@@ -873,13 +880,16 @@ static const struct ctl_table tagged_addr_sysctl_table[] = {
 
 static int __init tagged_addr_init(void)
 {
+#if IS_ENABLED(CONFIG_HAKC_ARM_V9)
+	return -EINVAL;
+#endif
 	if (!register_sysctl("abi", tagged_addr_sysctl_table))
 		return -EINVAL;
 	return 0;
 }
 
 core_initcall(tagged_addr_init);
-#endif	/* CONFIG_ARM64_TAGGED_ADDR_ABI */
+#endif	/* CONFIG_ARM64_TAGGED_ADDR_ABI || CONFIG_HAKC_ARM_V9 */
 
 #ifdef CONFIG_BINFMT_ELF
 int arch_elf_adjust_prot(int prot, const struct arch_elf_state *state,

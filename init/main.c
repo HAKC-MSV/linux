@@ -104,6 +104,10 @@
 #include <linux/ptdump.h>
 #include <net/net_namespace.h>
 
+#if IS_ENABLED(CONFIG_HAKC)
+#include <linux/hakc/hakc.h>
+#endif
+
 #include <asm/io.h>
 #include <asm/setup.h>
 #include <asm/sections.h>
@@ -698,6 +702,10 @@ static noinline void __ref __noreturn rest_init(void)
 {
 	struct task_struct *tsk;
 	int pid;
+
+#if IS_ENABLED(CONFIG_HAKC)
+	initialize_hakc();
+#endif
 
 	rcu_scheduler_starting();
 	/*

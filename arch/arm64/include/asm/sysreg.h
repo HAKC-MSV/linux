@@ -955,7 +955,7 @@
 #define SYS_GCR_EL1_RRND	(BIT(16))
 #define SYS_GCR_EL1_EXCL_MASK	0xffffUL
 
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 /*
  * KASAN always uses a whole byte for its tags. With CONFIG_KASAN_HW_TAGS it
  * only uses tags in the range 0xF0-0xFF, which we map to MTE tags 0x0-0xF.

@@ -292,7 +292,7 @@ static inline bool kaslr_enabled(void) { return false; }
 	(__force __typeof__(addr))__addr;				\
 })
 
-#if defined(CONFIG_KASAN_SW_TAGS) || defined(CONFIG_KASAN_HW_TAGS)
+#if defined(CONFIG_KASAN_SW_TAGS) || defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 #define __tag_shifted(tag)	((u64)(tag) << 56)
 #define __tag_reset(addr)	__untagged_addr(addr)
 #define __tag_get(addr)		(__u8)((u64)(addr) >> 56)
@@ -300,7 +300,7 @@ static inline bool kaslr_enabled(void) { return false; }
 #define __tag_shifted(tag)	0UL
 #define __tag_reset(addr)	(addr)
 #define __tag_get(addr)		0
-#endif /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS */
+#endif /* CONFIG_KASAN_SW_TAGS || CONFIG_KASAN_HW_TAGS || CONFIG_HAKC_ARM_V9 */
 
 static inline const void *__tag_set(const void *addr, u8 tag)
 {
@@ -308,7 +308,7 @@ static inline const void *__tag_set(const void *addr, u8 tag)
 	return (const void *)(__addr | __tag_shifted(tag));
 }
 
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 #define arch_enable_tag_checks_sync()		mte_enable_kernel_sync()
 #define arch_enable_tag_checks_async()		mte_enable_kernel_async()
 #define arch_enable_tag_checks_asymm()		mte_enable_kernel_asymm()
@@ -319,7 +319,7 @@ static inline const void *__tag_set(const void *addr, u8 tag)
 #define arch_get_mem_tag(addr)			mte_get_mem_tag(addr)
 #define arch_set_mem_tag_range(addr, size, tag, init)	\
 			mte_set_mem_tag_range((addr), (size), (tag), (init))
-#endif /* CONFIG_KASAN_HW_TAGS */
+#endif /* CONFIG_KASAN_HW_TAGS || CONFIG_HAKC_ARM_V9 */
 
 /*
  * Physical vs virtual RAM address space conversion.  These are

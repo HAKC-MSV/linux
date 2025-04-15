@@ -48,7 +48,7 @@
  * (16-byte) granularity, and we must ensure that no access straddles this
  * alignment boundary.
  */
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 #define MIN_PAGE_SIZE MTE_GRANULE_SIZE
 #else
 #define MIN_PAGE_SIZE 4096

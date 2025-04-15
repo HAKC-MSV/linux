@@ -16,6 +16,10 @@
 #include <linux/slab.h>
 #include <linux/string.h>
 
+#ifdef CONFIG_HAKC
+#include <linux/hakc/hakc.h>
+#endif
+
 #ifdef CONFIG_SYSFS
 /* Protects all built-in parameters, modules use their own param_lock */
 static DEFINE_MUTEX(param_lock);
@@ -241,6 +245,107 @@ STANDARD_PARAM_DEF(ulong,	unsigned long,		"%lu",		kstrtoul);
 STANDARD_PARAM_DEF(ullong,	unsigned long long,	"%llu",		kstrtoull);
 STANDARD_PARAM_DEF(hexint,	unsigned int,		"%#08x", 	kstrtouint);
 
+#if IS_ENABLED(CONFIG_HAKC)
+int hakc_duplicate_readonly_charp(const struct kernel_param *kp) {
+	char *valp = *(char **)kp->arg;
+	char *newvalp = (char *)kmalloc_parameter(strlen(valp) + 1);
+
+	if (!newvalp) {
+		return -ENOMEM;
+	}
+
+	strncpy(newvalp, valp, strlen(valp));
+	*(char **)kp->arg = newvalp;
+
+	return 0;
+}
+
+int hakc_transfer_charp(const struct kernel_param *kp) {
+	if (kp->mod->hakc_protected) {
+		/*
+		 * To determine the HAKC context for a parameter, iterate over
+		 * all Get HAKC Context (getctx) functions in the module.
+		 *
+		 * Call them against kp->arg. A non-zero return indicates that
+		 * the called function returned a valid HAKC signing context
+		 * for kp->arg.
+		 * A zero return indicates that the called function is not for
+		 * this parameter, so continue on to the next one.
+		 *
+		 * In the event that none of the getctx functions returns a
+		 * valid context, there is a problem in either the HAKC pass
+		 * or the module loader. There is no way to recover from here.
+		 */
+
+		/* there should be some function pointers but count is 0 */
+		if (kp->mod->num_hakc_modparam_getctx_fp == 0) {
+			pr_err("Could not find HAKC signing context function "
+				"pointers for %s\n", kp->mod->name);
+			/* not sure what code to use here */
+			return -EFAULT;
+		} else {
+			unsigned int fp_idx = 0;
+			int found_ctx = 0;
+			/* iterate over each pointer to a getctx function */
+			for (fp_idx = 0;
+				fp_idx < kp->mod->num_hakc_modparam_getctx_fp;
+				fp_idx++) {
+				/* returned HAKC signing context */
+				int64_t ctx = 0;
+				/* returned color */
+				clique_color_t color = 0;
+				/* HAKC compartment ID derived from context */
+				hakc_compartment_id_t compartment;
+				/* try to get the HAKC context */
+				getctx_fp next_fp =
+				kp->mod->hakc_modparam_getctx_fp[fp_idx];
+				ctx = next_fp(kp->arg, 0);
+				/* function wasn't for this parameter */
+				if (ctx == 0) {
+					continue;
+				}
+				/* found valid HAKC context for parameter */
+				compartment = (ctx >> 16);
+				/* also get the color for this parameter */
+				color = next_fp(kp->arg, 1);
+				/* indicate we found a valid context */
+				found_ctx = 1;
+				/*
+				 * in this case, kp->arg is a char**, so
+				 * get the char* from it, sign the char*,
+				 * transfer it to the module's compartment
+				 *
+				 * and update the value of kp->arg with
+				 * the newly signed pointer
+				 */
+				*(char **)kp->arg = hakc_transfer_to_clique((void *)*(char **)kp->arg, sizeof(char*), compartment,
+                                                            color, false);
+//                *(char **)kp->arg = hakc_transfer_string(*(char **)kp->arg, compartment, color);
+				return 0;
+			}
+			/* could not find valid HAKC context for parameter */
+			if (found_ctx == 0) {
+				pr_err("Could not find valid HAKC signing "
+					"context for %s in %s\n", kp->name,
+					kp->mod->name);
+				/* not sure what code to use here */
+				return -EFAULT;
+			}
+		}
+	}
+
+	/*
+	 * shouldn't be reached, but necessary to have
+	 *
+	 * error: non-void function does not return a value in all control paths
+	 */
+	pr_err("Tried to transfer charp but module %s is not HAKC-protected\n",
+		kp->mod->name);
+	/* not sure what code to use here */
+	return -EFAULT;
+}
+#endif
+
 int param_set_uint_minmax(const char *val, const struct kernel_param *kp,
 		unsigned int min, unsigned int max)
 {
@@ -269,7 +374,11 @@ int param_set_charp(const char *val, const struct kernel_param *kp)
 		return -ENOSPC;
 	}
 
+#if IS_ENABLED(CONFIG_HAKC)
+	maybe_kfree_parameter(HAKC_GET_SAFE_PTR(*(char **)kp->arg));
+#else
 	maybe_kfree_parameter(*(char **)kp->arg);
+#endif
 
 	/*
 	 * This is a hack. We can't kmalloc() in early boot, and we
@@ -283,19 +392,32 @@ int param_set_charp(const char *val, const struct kernel_param *kp)
 	} else
 		*(const char **)kp->arg = val;
 
+#if IS_ENABLED(CONFIG_HAKC)
+	if (kp->mod->hakc_protected) {
+		return hakc_transfer_charp(kp);
+	}
+#endif
 	return 0;
 }
 EXPORT_SYMBOL(param_set_charp);
 
 int param_get_charp(char *buffer, const struct kernel_param *kp)
 {
+#if IS_ENABLED(CONFIG_HAKC)
+	return scnprintf(buffer, PAGE_SIZE, "%s\n", HAKC_GET_SAFE_PTR(*((char **)kp->arg)));
+#else
 	return scnprintf(buffer, PAGE_SIZE, "%s\n", *((char **)kp->arg));
+#endif
 }
 EXPORT_SYMBOL(param_get_charp);
 
 void param_free_charp(void *arg)
 {
+#if IS_ENABLED(CONFIG_HAKC)
+	maybe_kfree_parameter(HAKC_GET_SAFE_PTR(*((char **)arg)));
+#else
 	maybe_kfree_parameter(*((char **)arg));
+#endif
 }
 EXPORT_SYMBOL(param_free_charp);
 

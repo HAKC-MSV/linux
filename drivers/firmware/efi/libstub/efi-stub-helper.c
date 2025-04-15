@@ -401,8 +401,13 @@ char *efi_convert_cmdline(efi_loaded_image_t *image)
 	if (status != EFI_SUCCESS)
 		return NULL;
 
+#if IS_ENABLED(CONFIG_HAKC)
+	ls_snprintf((char *)cmdline_addr, options_bytes, "%.*ls",
+		 options_bytes - 1, options);
+#else
 	snprintf((char *)cmdline_addr, options_bytes, "%.*ls",
 		 options_bytes - 1, options);
+#endif
 
 	return (char *)cmdline_addr;
 }

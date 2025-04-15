@@ -14,6 +14,10 @@
 #include <linux/rcupdate.h>
 #include <linux/mm.h>
 
+#ifdef CONFIG_HAKC
+#include <linux/hakc/hakc.h>
+#endif
+
 #ifndef ARCH_SHF_SMALL
 #define ARCH_SHF_SMALL 0
 #endif
@@ -88,6 +92,9 @@ struct load_info {
 		unsigned int pcpu;
 		unsigned int vers_ext_crc;
 		unsigned int vers_ext_name;
+#ifdef CONFIG_HAKC
+		unsigned int hakc_pcpu[HAKC_COLOR_COUNT];
+#endif
 	} index;
 };
 

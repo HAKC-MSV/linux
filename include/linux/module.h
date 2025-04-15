@@ -32,6 +32,11 @@
 #include <linux/percpu.h>
 #include <asm/module.h>
 
+#ifdef CONFIG_HAKC
+#include <linux/hakc/hakc.h>
+#include <linux/hakc/hakc-globals.h>
+#endif
+
 #define MODULE_NAME_LEN MAX_PARAM_PREFIX_LEN
 
 struct modversion_info {
@@ -500,8 +505,16 @@ struct module {
 
 #ifdef CONFIG_SMP
 	/* Per-cpu data. */
+#ifdef CONFIG_HAKC
+	void __percpu *percpus[HAKC_COLOR_COUNT + 1];
+	unsigned int percpu_sizes[HAKC_COLOR_COUNT + 1];
+#define percpu_idx  (ARRAY_SIZE(((struct module*)NULL)->percpus) - 1)
+#define for_each_percpu(idx) for(idx = 0; idx <= percpu_idx; idx++)
+#define for_each_added_percpu(idx) for(idx = 0; idx < percpu_idx; idx++)
+#else
 	void __percpu *percpu;
 	unsigned int percpu_size;
+#endif
 #endif
 	void *noinstr_text_start;
 	unsigned int noinstr_text_size;
@@ -597,6 +610,19 @@ struct module {
 #endif
 #ifdef CONFIG_DYNAMIC_DEBUG_CORE
 	struct _ddebug_info dyndbg_info;
+#endif
+
+#ifdef CONFIG_HAKC
+	/* Module is compartmentalized. */
+	bool hakc_protected;
+	/* Module has parameters. */
+	bool hakc_modparams;
+	/* Functions to get HAKC context for module parameters. */
+	getctx_fp *hakc_modparam_getctx_fp;
+	unsigned int num_hakc_modparam_getctx_fp;
+
+    hakc_global_init_fp *hakc_global_inits;
+    unsigned int num_hakc_global_inits;
 #endif
 } ____cacheline_aligned __randomize_layout;
 #ifndef MODULE_ARCH_INIT

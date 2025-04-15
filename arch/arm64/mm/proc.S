@@ -45,7 +45,7 @@
 #define TCR_KASAN_SW_FLAGS 0
 #endif
 
-#ifdef CONFIG_KASAN_HW_TAGS
+#if defined(CONFIG_KASAN_HW_TAGS) || defined(CONFIG_HAKC_ARM_V9)
 #define TCR_MTE_FLAGS TCR_TCMA1 | TCR_TBI1 | TCR_TBID1
 #elif defined(CONFIG_ARM64_MTE)
 /*

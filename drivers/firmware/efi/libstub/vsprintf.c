@@ -298,7 +298,11 @@ do {				\
 	++pos;			\
 } while (0);
 
+#if IS_ENABLED(CONFIG_HAKC)
+int ls_vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
+#else
 int vsnprintf(char *buf, size_t size, const char *fmt, va_list ap)
+#endif
 {
 	/* The maximum space required is to print a 64-bit number in octal */
 	char tmp[(sizeof(unsigned long long) * 8 + 2) / 3];
@@ -552,13 +556,21 @@ fail:
 	return pos;
 }
 
+#if IS_ENABLED(CONFIG_HAKC)
+int ls_snprintf(char *buf, size_t size, const char *fmt, ...)
+#else
 int snprintf(char *buf, size_t size, const char *fmt, ...)
+#endif
 {
 	va_list args;
 	int i;
 
 	va_start(args, fmt);
+#if IS_ENABLED(CONFIG_HAKC)
+	i = ls_vsnprintf(buf, size, fmt, args);
+#else
 	i = vsnprintf(buf, size, fmt, args);
+#endif
 	va_end(args);
 	return i;
 }

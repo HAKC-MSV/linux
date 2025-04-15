@@ -23,7 +23,11 @@ void error(char *m)
 		asm("hlt");
 }
 
+#if IS_ENABLED(CONFIG_HAKC)
+/* EFI libstub  provides ls_vsnprintf() */
+#else
 /* EFI libstub  provides vsnprintf() */
+#endif
 #ifdef CONFIG_EFI_STUB
 void panic(const char *fmt, ...)
 {
@@ -32,7 +36,11 @@ void panic(const char *fmt, ...)
 	int len;
 
 	va_start(args, fmt);
+#if IS_ENABLED(CONFIG_HAKC)
+	len = ls_vsnprintf(buf, sizeof(buf), fmt, args);
+#else
 	len = vsnprintf(buf, sizeof(buf), fmt, args);
+#endif
 	va_end(args);
 
 	if (len && buf[len - 1] == '\n')
