@@ -4,6 +4,7 @@ menu "HAKC"
 config HAKC
   bool "Enable HAKC"
   default n
+  depends on DEBUG_INFO_DWARF5 || DEBUG_INFO_DWARF4 || DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT
 
 config HAKC_CONFIG_PATH
   depends on HAKC
@@ -36,28 +37,24 @@ config HAKC_LOG_FAILURE
   help
     Track the number of accesses and failed HAKC pointer accesses.
 
-config HAKC_SIGN_PTR
-  bool "Sign pointers using the HAKC context"
+config HAKC_DEMO_LEAK
+  bool "Enable leaking pointers for HAKC demos"
+  default n
   depends on HAKC
-  default n
-  help
-    Return pointers signed using the computed HAKC context.
-
-config HAKC_DEMO_LEAK
-  bool "Enable leaking pointers for HAKC demos"
-  default y
   help
     Allows pointers to be leaked for HAKC demos
 
 config HAKC_XPAD_INSERT_COMMAND
   bool "Insert extra commands into Kobuki streams for HAKC Turtlebot 2 demo"
   default n
+  depends on HAKC
   help
     When enabled, inserts LED toggle command into Kobuki command stream going to Turtlebot.
 
 config HAKC_XPAD_RANDOMIZE
   bool "Periodically flip the sign of radius and speed values in Kobuki BaseCommands."
-  default y
+  default n
+  depends on HAKC
   help
     When enabled, the speed and radius values in Kobuki BaseCommands will be modified every N seconds under exploit.
 
@@ -70,69 +67,8 @@ config HAKC_XPAD_RANDOMIZE_INTERVAL
 
 config HAKC_KOBUKI_CHECKSUM_TWEAK
   bool "Keep doing checksum for non-BaseCommand payloads."
-  default y
-  help
-    Did not have checksum update for non-BaseCommand payloads before and it still worked, just in case.
-
-config HAKC_DEMO_LEAK
-  bool "Enable leaking pointers for HAKC demos"
-  default y
-  help
-    Allows pointers to be leaked for HAKC demos
-
-config HAKC_XPAD_INSERT_COMMAND
-  bool "Insert extra commands into Kobuki streams for HAKC Turtlebot 2 demo"
   default n
-  help
-    When enabled, inserts LED toggle command into Kobuki command stream going to Turtlebot.
-
-config HAKC_XPAD_RANDOMIZE
-  bool "Periodically flip the sign of radius and speed values in Kobuki BaseCommands."
-  default y
-  help
-    When enabled, the speed and radius values in Kobuki BaseCommands will be modified every N seconds under exploit.
-
-config HAKC_XPAD_RANDOMIZE_INTERVAL
-  int "Interval for modifying Kobuki BaseCommands."
-  depends on HAKC_XPAD_RANDOMIZE
-  default 5
-  help
-    Interval length for modifying Kobuki BaseCommands..
-
-config HAKC_KOBUKI_CHECKSUM_TWEAK
-  bool "Keep doing checksum for non-BaseCommand payloads."
-  default y
-  help
-    Did not have checksum update for non-BaseCommand payloads before and it still worked, just in case.
-
-config HAKC_DEMO_LEAK
-  bool "Enable leaking pointers for HAKC demos"
-  default y
-  help
-    Allows pointers to be leaked for HAKC demos
-
-config HAKC_XPAD_INSERT_COMMAND
-  bool "Insert extra commands into Kobuki streams for HAKC Turtlebot 2 demo"
-  default n
-  help
-    When enabled, inserts LED toggle command into Kobuki command stream going to Turtlebot.
-
-config HAKC_XPAD_RANDOMIZE
-  bool "Periodically flip the sign of radius and speed values in Kobuki BaseCommands."
-  default y
-  help
-    When enabled, the speed and radius values in Kobuki BaseCommands will be modified every N seconds under exploit.
-
-config HAKC_XPAD_RANDOMIZE_INTERVAL
-  int "Interval for modifying Kobuki BaseCommands."
-  depends on HAKC_XPAD_RANDOMIZE
-  default 5
-  help
-    Interval length for modifying Kobuki BaseCommands..
-
-config HAKC_KOBUKI_CHECKSUM_TWEAK
-  bool "Keep doing checksum for non-BaseCommand payloads."
-  default y
+  depends on HAKC
   help
     Did not have checksum update for non-BaseCommand payloads before and it still worked, just in case.
 

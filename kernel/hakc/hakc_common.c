@@ -466,9 +466,6 @@ EXPORT_SYMBOL(hakc_debug_breakpoint);
 void *hakc_sign_pointer(void *addr, hakc_compartment_id_t compartment,
 			clique_color_t color, bool is_code)
 {
-#if !HAKC_SIGN_PTR
-	void *orig_addr = addr;
-#endif
 	if (compartment == 0 || !hakc_initialized) {
 		return HAKC_GET_SAFE_PTR(addr);
 	}
@@ -485,12 +482,7 @@ void *hakc_sign_pointer(void *addr, hakc_compartment_id_t compartment,
 		}
 		HAKC_INFO("TRANSFER RESULT to %d %p\n", compartment, addr);
 	}
-
-#if HAKC_SIGN_PTR
 	return (void *)addr;
-#else
-	return orig_addr;
-#endif
 }
 EXPORT_SYMBOL(hakc_sign_pointer);
 
