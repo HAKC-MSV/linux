@@ -1,6 +1,16 @@
 # SPDX-License-Identifier: GPL-2.0
 # Unified Makefile for i386 and x86_64
 
+# HAKC: check for pass path var once at the very top
+ifeq ($(CONFIG_HAKC), y)
+ifeq ($(CONFIG_HAKC_CONFIG_PATH),"")
+$(error "CONFIG_HAKC_CONFIG_PATH is not set!")
+endif
+# the following two lines are common to all supported architectures
+KBUILD_CFLAGS += -mllvm --enable-hakc -mllvm \
+			--hakc-config=$(CONFIG_HAKC_CONFIG_PATH)
+endif
+
 # select defconfig based on actual architecture
 ifeq ($(ARCH),x86)
   ifeq ($(shell uname -m | sed -e 's/i.86/i386/'),i386)

@@ -1,0 +1,139 @@
+menu "HAKC"
+  depends on 64BIT && (AS_SHA256_NI || CRYPTO_SHA256_SSSE3 || CRYPTO_SHA256_ARM64 || ARM64_MTE)
+
+config HAKC
+  bool "Enable HAKC"
+  default n
+
+config HAKC_CONFIG_PATH
+  depends on HAKC
+  string "HAKC Configuration File Path"
+  default ""
+  help
+    The path to the HAKC configuration path.
+
+source "arch/x86/Kconfig.hakc"
+source "arch/arm64/Kconfig.hakc"
+
+config HAKC_DEBUG_PRINT
+  bool "Print HAKC debug information"
+  depends on HAKC
+  default n
+
+config HAKC_ALLOW_FAILED
+  bool "Allow pointers that fail authentication"
+  depends on HAKC
+  default y
+  help
+    If a pointer fails the HAKC check, return a valid
+    pointer anyway. This effectively disables the HAKC
+    protections, but the check happens anyway.
+
+config HAKC_LOG_FAILURE
+  bool "Track failed HAKC accesses"
+  depends on HAKC && PROC_FS
+  default n
+  help
+    Track the number of accesses and failed HAKC pointer accesses.
+
+config HAKC_SIGN_PTR
+  bool "Sign pointers using the HAKC context"
+  depends on HAKC
+  default n
+  help
+    Return pointers signed using the computed HAKC context.
+
+config HAKC_DEMO_LEAK
+  bool "Enable leaking pointers for HAKC demos"
+  default y
+  help
+    Allows pointers to be leaked for HAKC demos
+
+config HAKC_XPAD_INSERT_COMMAND
+  bool "Insert extra commands into Kobuki streams for HAKC Turtlebot 2 demo"
+  default n
+  help
+    When enabled, inserts LED toggle command into Kobuki command stream going to Turtlebot.
+
+config HAKC_XPAD_RANDOMIZE
+  bool "Periodically flip the sign of radius and speed values in Kobuki BaseCommands."
+  default y
+  help
+    When enabled, the speed and radius values in Kobuki BaseCommands will be modified every N seconds under exploit.
+
+config HAKC_XPAD_RANDOMIZE_INTERVAL
+  int "Interval for modifying Kobuki BaseCommands."
+  depends on HAKC_XPAD_RANDOMIZE
+  default 5
+  help
+    Interval length for modifying Kobuki BaseCommands..
+
+config HAKC_KOBUKI_CHECKSUM_TWEAK
+  bool "Keep doing checksum for non-BaseCommand payloads."
+  default y
+  help
+    Did not have checksum update for non-BaseCommand payloads before and it still worked, just in case.
+
+config HAKC_DEMO_LEAK
+  bool "Enable leaking pointers for HAKC demos"
+  default y
+  help
+    Allows pointers to be leaked for HAKC demos
+
+config HAKC_XPAD_INSERT_COMMAND
+  bool "Insert extra commands into Kobuki streams for HAKC Turtlebot 2 demo"
+  default n
+  help
+    When enabled, inserts LED toggle command into Kobuki command stream going to Turtlebot.
+
+config HAKC_XPAD_RANDOMIZE
+  bool "Periodically flip the sign of radius and speed values in Kobuki BaseCommands."
+  default y
+  help
+    When enabled, the speed and radius values in Kobuki BaseCommands will be modified every N seconds under exploit.
+
+config HAKC_XPAD_RANDOMIZE_INTERVAL
+  int "Interval for modifying Kobuki BaseCommands."
+  depends on HAKC_XPAD_RANDOMIZE
+  default 5
+  help
+    Interval length for modifying Kobuki BaseCommands..
+
+config HAKC_KOBUKI_CHECKSUM_TWEAK
+  bool "Keep doing checksum for non-BaseCommand payloads."
+  default y
+  help
+    Did not have checksum update for non-BaseCommand payloads before and it still worked, just in case.
+
+config HAKC_DEMO_LEAK
+  bool "Enable leaking pointers for HAKC demos"
+  default y
+  help
+    Allows pointers to be leaked for HAKC demos
+
+config HAKC_XPAD_INSERT_COMMAND
+  bool "Insert extra commands into Kobuki streams for HAKC Turtlebot 2 demo"
+  default n
+  help
+    When enabled, inserts LED toggle command into Kobuki command stream going to Turtlebot.
+
+config HAKC_XPAD_RANDOMIZE
+  bool "Periodically flip the sign of radius and speed values in Kobuki BaseCommands."
+  default y
+  help
+    When enabled, the speed and radius values in Kobuki BaseCommands will be modified every N seconds under exploit.
+
+config HAKC_XPAD_RANDOMIZE_INTERVAL
+  int "Interval for modifying Kobuki BaseCommands."
+  depends on HAKC_XPAD_RANDOMIZE
+  default 5
+  help
+    Interval length for modifying Kobuki BaseCommands..
+
+config HAKC_KOBUKI_CHECKSUM_TWEAK
+  bool "Keep doing checksum for non-BaseCommand payloads."
+  default y
+  help
+    Did not have checksum update for non-BaseCommand payloads before and it still worked, just in case.
+
+endmenu
