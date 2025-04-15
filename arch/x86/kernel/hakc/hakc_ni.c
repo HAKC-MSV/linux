@@ -45,7 +45,7 @@ const char* impl_str = "SSSE3";
 #endif
 
 #if IS_ENABLED(CONFIG_HAKC_X86_SIGN_NI)
-void sha256_ni_transform(u32 *digest, const void *data, unsigned int num_blks);
+asmlinkage void sha256_ni_transform(u32 *digest, const void *data, unsigned int num_blks);
 const char* impl_str = "NI";
 #endif
 

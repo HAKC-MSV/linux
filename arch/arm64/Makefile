@@ -9,16 +9,6 @@
 # for more details.
 #
 # Copyright (C) 1995-2001 by Russell King
-# HAKC: check for pass path var once at the very top
-ifeq ($(CONFIG_HAKC), y)
-ifeq ($(CONFIG_HAKC_CONFIG_PATH),"")
-$(error "CONFIG_HAKC_CONFIG_PATH is not set!")
-endif
-# the following two lines are common to all supported architectures
-KBUILD_CFLAGS += -mllvm --enable-hakc -mllvm \
-			--hakc-config=$(CONFIG_HAKC_CONFIG_PATH)
-endif
-
 LDFLAGS_vmlinux	:=--no-undefined -X --pic-veneer
 
 ifeq ($(CONFIG_RELOCATABLE), y)

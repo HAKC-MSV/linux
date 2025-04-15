@@ -928,6 +928,15 @@ KBUILD_CFLAGS	+= $(CC_AUTO_VAR_INIT_ZERO_ENABLER)
 endif
 endif
 
+# HAKC: check for pass path var once at the very top
+ifeq ($(CONFIG_HAKC), y)
+ifeq ($(CONFIG_HAKC_CONFIG_PATH),"")
+$(error "CONFIG_HAKC_CONFIG_PATH is not set!")
+endif
+KBUILD_CFLAGS += -mllvm --enable-hakc -mllvm --hakc-config=$(CONFIG_HAKC_CONFIG_PATH)
+endif
+
+
 # While VLAs have been removed, GCC produces unreachable stack probes
 # for the randomize_kstack_offset feature. Disable it for all compilers.
 KBUILD_CFLAGS	+= $(call cc-option, -fno-stack-clash-protection)
