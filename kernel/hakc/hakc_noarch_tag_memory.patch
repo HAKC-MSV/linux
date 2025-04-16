@@ -1,0 +1,79 @@
+10a11,19
+> #define HAKC_INFO(fmt, ...)                                                    \
+>         if (HAKC_DEBUG) {                                                      \
+>                 pr_info(fmt, ##__VA_ARGS__);                                   \
+>         }
+> #define HAKC_ERR(fmt, ...)                                                     \
+>         if (HAKC_DEBUG) {                                                      \
+>                 pr_err(fmt, ##__VA_ARGS__);                                    \
+>         }
+> 
+82c91
+< 		return vaddr - X86_DIRECT_MAP_START - X86_MEMSTART;
+---
+> 		return ((uintptr_t)(vaddr - X86_DIRECT_MAP_START - X86_MEMSTART))&(uintptr_t)0x00000000FFFFFFFFL;
+88c97
+< 		pr_err("none or bad pgd\n");
+---
+> 		pr_err("none or bad pgd for vaddr %llx\n", addr);
+94c103
+< 		pr_err("none or bad p4d\n");
+---
+> 		pr_err("none or bad p4d for vaddr %llx\n", addr);
+100c109
+< 		pr_err("none or bad pud\n");
+---
+> 		pr_err("none or bad pud for addr %llx\n", addr);
+106c115
+< 		pr_err("none or bad pmd\n");
+---
+> 		pr_err("none or bad pmd for addr %llx\n", addr);
+113c122
+< 		pr_err("none or bad pte\n");
+---
+> 		pr_err("none or bad pte for addr %llx\n", addr);
+128,129c137,138
+< 	return (((uintptr_t)pte_val(pte) & (uintptr_t)(PTE_MASK & PAGE_MASK)) |
+< 		(((uintptr_t)addr) & (PAGE_SIZE-1))) - X86_MEMSTART;
+---
+> 	return ((((uintptr_t)pte_val(pte) & (uintptr_t)(PTE_MASK & PAGE_MASK)) |
+> 		(((uintptr_t)addr) & (PAGE_SIZE-1))) - X86_MEMSTART) & (uintptr_t)0x00000000FFFFFFFFL;
+141c150
+< #if HAKC_USE_SYMBOLS && IS_ENABLED(CONFIG_KALLSYMS)
+---
+> #if HAKC_DEBUG && HAKC_USE_SYMBOLS && IS_ENABLED(CONFIG_KALLSYMS)
+176c185
+< #if HAKC_USE_SYMBOLS && IS_ENABLED(CONFIG_KALLSYMS)
+---
+> #if HAKC_DEBUG && HAKC_USE_SYMBOLS && IS_ENABLED(CONFIG_KALLSYMS)
+205c214
+< 	next_granule = hakc_pagetable_walk(ptr) >> 4;
+---
+> 	next_granule = paddr >> 4;
+213a223,228
+> 
+> 	if ((next_granule/2) >= tagpool_physical_size) {
+> 		pr_err("erroneous granule %lx tagpool size %lx\n", next_granule/2, tagpool_physical_size);
+> 	}
+> 
+> 
+264c279
+< 	_addr = (unsigned long)((void*)HAKC_GET_SAFE_PTR(addr));
+---
+> 	_addr = (unsigned long)addr;
+277a293,299
+> 	} else if (!hakc_initialized) {
+> 		HAKC_INFO("!hakc_initialized\n");
+> 		return SILVER_CLIQUE;
+>         }
+> 
+> 	if (addr_is_signed(addr)) {
+> 		_addr = (unsigned long)HAKC_KADDR(addr);
+281c303
+< 	granule = hakc_pagetable_walk((void*)HAKC_GET_SAFE_PTR(addr)) >> 4;
+---
+> 	granule = hakc_pagetable_walk((void*)_addr) >> 4;
+284c306
+< 			addr, granule);
+---
+> 			_addr, granule);
