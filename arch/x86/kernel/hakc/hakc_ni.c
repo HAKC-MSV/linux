@@ -6,31 +6,23 @@
 #include <linux/kallsyms.h>
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
+#include <crypto/hash.h>
+
+//#define HAKC_DEBUG 1
+
+#define HAKC_INFO(fmt, ...)                                                    \
+        if (HAKC_DEBUG) {                                                      \
+                pr_info(fmt, ##__VA_ARGS__);                                   \
+        }
+#define HAKC_ERR(fmt, ...)                                                     \
+        if (HAKC_DEBUG) {                                                      \
+                pr_err(fmt, ##__VA_ARGS__);                                    \
+        }
 
 struct percpu_info {
 	void *signed_addr;
 	bool is_percpu, is_dynamic;
 	void *percpu_addr;
-};
-
-/*
- * See FIPS 180-4, Section 5.3.3:
- * "SHA-256
- * For SHA-256, the initial hash value, H(0), shall consist of the following
- * eight 32-bit words, in hex:
- * ...
- * These words were obtained by taking the first thirty-two bits of
- * the fractional parts of the square roots of the first eight prime numbers."
- */
-const uint32_t H_0[8] = {
-	0x6a09e667,
-	0xbb67ae85,
-	0x3c6ef372,
-	0xa54ff53a,
-	0x510e527f,
-	0x9b05688c,
-	0x1f83d9ab,
-	0x5be0cd19,
 };
 
 #if !IS_ENABLED(CONFIG_HAKC_X86_SIGN_SSSE3) && \
@@ -39,53 +31,87 @@ const uint32_t H_0[8] = {
 	"or HAKC_X86_SIGN_NI in kernel config"
 #endif
 
-#if IS_ENABLED(CONFIG_HAKC_X86_SIGN_SSSE3)
-void sha256_transform_ssse3(u32 *digest, const void *data, unsigned int num_blks);
-const char* impl_str = "SSSE3";
-#endif
+const char* impl_str = "KERN";
 
-#if IS_ENABLED(CONFIG_HAKC_X86_SIGN_NI)
-asmlinkage void sha256_ni_transform(u32 *digest, const void *data, unsigned int num_blks);
-const char* impl_str = "NI";
-#endif
+struct sdesc {
+    struct shash_desc shash;
+    char ctx[];
+};
 
-static void *ni_sha256_hash_address_with_modifier(const void *address,
+static struct sdesc *init_sdesc(struct crypto_shash *alg)
+{
+    struct sdesc *sdesc;
+    int size;
+
+    size = sizeof(struct shash_desc) + crypto_shash_descsize(alg);
+    sdesc = kmalloc(size, GFP_KERNEL);
+    if (!sdesc)
+        return ERR_PTR(-ENOMEM);
+    sdesc->shash.tfm = alg;
+    return sdesc;
+}
+
+
+static int calc_hash(struct crypto_shash *alg,
+             const unsigned char *data, unsigned int datalen,
+             unsigned char *digest)
+{
+    struct sdesc *sdesc;
+    int ret;
+
+    sdesc = init_sdesc(alg);
+    if (IS_ERR(sdesc)) {
+        pr_info("can't alloc sdesc\n");
+        return PTR_ERR(sdesc);
+    }
+
+    ret = crypto_shash_digest(&sdesc->shash, data, datalen, digest);
+    kfree(sdesc);
+    return ret;
+}
+static const char *hash_alg_name = "sha256";
+
+// this uses whatever the kernel thinks is the best implementation
+
+static inline void *ni_sha256_hash_address_with_modifier(const void *address,
 							pac_salt_t modifier)
 {
-	uint32_t H[8];
-	unsigned char buffer[64];
-	uint64_t h0;
+	struct crypto_shash *__alg;
+	unsigned char __digest[256];
+	unsigned char __data[64];
+
 	void *result;
 
-	memcpy(H, H_0, 8*4);
-	memset(buffer, 0, 64);
+	__alg = NULL;
+	__alg = crypto_alloc_shash(hash_alg_name, 0, 0);
+	if(IS_ERR(__alg)){
+		pr_info("can't alloc alg %s\n", hash_alg_name);
+		//return PTR_ERR(alg);
+       	}
+        if (!__alg) return (void*)0xaaaaaaaaaaaaaaaa;
 
-	*((pac_salt_t *)&buffer[0]) = modifier;
-	*((uintptr_t *)&buffer[sizeof(pac_salt_t *)]) =
-		(uintptr_t)((uintptr_t)address & 0xff00ffffffffffffL);
-
-	/*
-	 * I don't know if this state is saved/restored correctly
-	 * on context switch
-	 * match the behavior of ARM v8 HAKC
-	 */
 	preempt_disable();
-#if IS_ENABLED(CONFIG_HAKC_X86_SIGN_NI)
-	sha256_ni_transform(H, buffer, 1);
-#endif
-#if IS_ENABLED(CONFIG_HAKC_X86_SIGN_SSSE3)
-	sha256_transform_ssse3(H, buffer, 1);
-#endif
+	memset(__digest, 0, 256);
+	memset(__data, 0, 64);
+	*((uint64_t *)&__data[0]) = (uint64_t)modifier;
+	*((uint64_t *)&__data[8]) = (uint64_t)((uint64_t)address & 0xff00ffffffffffffL);
+//	*((uint64_t *)&data[16]) = (uint64_t)modifier;
+//	*((uint64_t *)&data[24]) = (uint64_t)((uint64_t)address & 0xff00ffffffffffffL);
+
+        calc_hash(__alg, __data, 64, __digest);
+	crypto_free_shash(__alg);
+        uint64_t res = 0;
+	memcpy(&res, &__digest[0], 8);
 	preempt_enable();
+//	uintptr_t tmp_addr = (uintptr_t)address;
 
-	h0 = (uint64_t)H[0];
+//	printk("addr %llx mod %llx res %llx\n", (uint64_t)((uint64_t)address&0xff00ffffffffffffL), (uint64_t)modifier, (uint64_t)res);
+//	printk("\taddr byte %llx , res byte %llx\n", tmp_addr & 0x00ff000000000000, res & 0x00ff000000000000);
 
-	if ((h0 & 0xff000000) == 0xff000000) {
-		h0 = (uint64_t)0xfe000000 << 24;
-	} else {
-		h0 = (h0 & 0xff000000) << 24;
+	if((res & 0x00ff000000000000l) == 0x00ff000000000000l) {
+		res = 0x00fe000000000000l;
 	}
-	result = (void*)(((uintptr_t)address & 0xff00ffffffffffffL) | h0);
+	result = (void*)(((uintptr_t)address & 0xff00ffffffffffffL) | (res & 0x00ff000000000000l));
 
 	return result;
 }
