@@ -91,7 +91,7 @@ static int __init rosdemo_leaker_init(void)
 
 	pr_info("Hello from ROSDEMO Leaker\n");
 	topicnameaddr = (uintptr_t)&topicname[0];
-	pr_info("%0llx\n", topicnameaddr);
+	pr_info("%0lx\n", topicnameaddr);
 
 	err = register_chrdev_region(MKDEV(MY_MAJOR, 0), MY_MAX_MINORS,
 					"rosdemo_leaker");

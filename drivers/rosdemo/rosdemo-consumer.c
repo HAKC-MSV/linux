@@ -60,7 +60,7 @@ static int my_open(struct inode *inode, struct file *file)
 				&fd->f_pos);
 		file_close(fd);
 
-		pr_info("leaked topicnameaddr %0llx\n", topicnameaddr);
+		pr_info("leaked topicnameaddr %0lx\n", topicnameaddr);
 
 		((char *)((uintptr_t)topicnameaddr))[0] = 'U';
 		((char *)((uintptr_t)topicnameaddr))[1] = 'H';
