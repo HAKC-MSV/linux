@@ -12,10 +12,6 @@ source "drivers/rapidio/Kconfig"
 
 source "drivers/rosdemo/Kconfig"
 source "drivers/tb-exploiter/Kconfig"
-source "drivers/rosdemo/Kconfig"
-source "drivers/tb-exploiter/Kconfig"
-source "drivers/rosdemo/Kconfig"
-source "drivers/tb-exploiter/Kconfig"
 
 source "drivers/base/Kconfig"
 
