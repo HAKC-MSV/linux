@@ -77,6 +77,8 @@ MODULE_AUTHOR("Qumranet");
 MODULE_DESCRIPTION("KVM support for VMX (Intel VT-x) extensions");
 MODULE_LICENSE("GPL");
 
+MODULE_IMPORT_NS("HAKC_KVM");
+
 #ifdef MODULE
 static const struct x86_cpu_id vmx_cpu_id[] = {
 	X86_MATCH_FEATURE(X86_FEATURE_VMX, NULL),

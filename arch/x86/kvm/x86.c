@@ -86,6 +86,8 @@
 #include <asm/sgx.h>
 #include <clocksource/hyperv_timer.h>
 
+MODULE_IMPORT_NS("HAKC_KVM");
+
 #define CREATE_TRACE_POINTS
 #include "trace.h"
 
