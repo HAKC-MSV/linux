@@ -18,7 +18,7 @@
  * see https://github.com/rust-lang/rust-bindgen/issues/2244.
  */
 #if defined(CONFIG_DEBUG_INFO_BTF) && defined(CONFIG_PAHOLE_HAS_BTF_TAG) && \
-	__has_attribute(btf_type_tag) && !defined(__BINDGEN__)
+__has_attribute(btf_type_tag) && !defined(__BINDGEN__)
 # define BTF_TYPE_TAG(value) __attribute__((btf_type_tag(#value)))
 #else
 # define BTF_TYPE_TAG(value) /* nothing */
@@ -32,8 +32,8 @@
 # define __iomem	__attribute__((noderef, address_space(__iomem)))
 # define __percpu	__attribute__((noderef, address_space(__percpu)))
 # define __rcu		__attribute__((noderef, address_space(__rcu)))
-static inline void __chk_user_ptr(const volatile void __user *ptr) { }
-static inline void __chk_io_ptr(const volatile void __iomem *ptr) { }
+static inline void __chk_user_ptr(const volatile void __user *ptr) {}
+static inline void __chk_io_ptr(const volatile void __iomem *ptr) {}
 /* context/locking */
 # define __must_hold(x)	__attribute__((context(x,1,1)))
 # define __acquires(x)	__attribute__((context(x,0,1)))
@@ -55,14 +55,14 @@ static inline void __chk_io_ptr(const volatile void __iomem *ptr) { }
 #  define __user	__attribute__((user))
 # else
 #ifdef CONFIG_HAKC
-#  define __user	__attribute__((kernel_user_ptr))
+#  define __user	__attribute__((hakc_ignored))
 #else
 #  define __user	BTF_TYPE_TAG(user)
 #endif
 # endif
 # define __iomem
 #ifdef CONFIG_HAKC
-# define __percpu	__attribute__((per_cpu_ptr))
+# define __percpu	__attribute__((hakc_ignored))
 #else
 # define __percpu	BTF_TYPE_TAG(percpu)
 #endif
@@ -200,22 +200,25 @@ struct ftrace_branch_data {
 	const char *func;
 	const char *file;
 	unsigned line;
+
 	union {
 		struct {
 			unsigned long correct;
 			unsigned long incorrect;
 		};
+
 		struct {
 			unsigned long miss;
 			unsigned long hit;
 		};
+
 		unsigned long miss_hit[2];
 	};
 };
 
 struct ftrace_likely_data {
-	struct ftrace_branch_data	data;
-	unsigned long			constant;
+	struct ftrace_branch_data data;
+	unsigned long constant;
 };
 
 #if defined(CC_USING_HOTPATCH)
@@ -477,8 +480,8 @@ struct ftrace_likely_data {
  * alternative behaviors (mainly "g" and "rm").
  */
 #ifndef ASM_INPUT_G
-  #define ASM_INPUT_G "g"
-  #define ASM_INPUT_RM "rm"
+#define ASM_INPUT_G "g"
+#define ASM_INPUT_RM "rm"
 #endif
 
 #ifdef CONFIG_CC_HAS_ASM_INLINE
