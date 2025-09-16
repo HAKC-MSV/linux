@@ -55,14 +55,14 @@ static inline void __chk_io_ptr(const volatile void __iomem *ptr) {}
 #  define __user	__attribute__((user))
 # else
 #ifdef CONFIG_HAKC
-#  define __user	__attribute__((hakc_ignored))
+#  define __user	__attribute__((kernel_user_ptr))
 #else
 #  define __user	BTF_TYPE_TAG(user)
 #endif
 # endif
 # define __iomem
 #ifdef CONFIG_HAKC
-# define __percpu	__attribute__((hakc_ignored))
+# define __percpu	__attribute__((per_cpu_ptr))
 #else
 # define __percpu	BTF_TYPE_TAG(percpu)
 #endif
