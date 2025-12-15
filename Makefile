@@ -933,7 +933,7 @@ ifeq ($(CONFIG_HAKC), y)
 ifeq ($(CONFIG_HAKC_CONFIG_PATH),"")
 $(error "CONFIG_HAKC_CONFIG_PATH is not set!")
 endif
-KBUILD_CFLAGS += -mllvm --enable-hakc -mllvm --hakc-config=$(CONFIG_HAKC_CONFIG_PATH)
+KBUILD_CFLAGS += -mllvm --enable-hakc -mllvm --hakc-config=$(CONFIG_HAKC_CONFIG_PATH)  -mllvm --pass-mode=run-config-and-exit
 endif
 
 
